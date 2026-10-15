@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>🧑‍🤝‍🧑 DiviFriends v5</title>
+
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="DiviFriends">
+    <link rel="apple-touch-icon" href="https://i.imgur.com/2s2Ew2s.png"> <!-- Placeholder Icon -->
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Chart.js for Stats -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+
+    <style>
+        :root {
+            --app-bg: #0A0A10;
+            --text-primary: rgba(255,255,255,0.98);
+            --text-secondary: rgba(255,255,255,0.7);
+            --glass-bg: rgba(25, 25, 40, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        /* --- Theme Palettes --- */
+        body.theme-teal{--neon-primary:#00F2FF;--neon-secondary:#39FF14;--neon-accent:#E8FF00;--neon-danger:#FF073A;--border-color:rgba(0,242,255,0.25);}
+        body.theme-orange{--neon-primary:#FFA500;--neon-secondary:#FFD700;--neon-accent:#39FF14;--neon-danger:#FF4500;--border-color:rgba(255,165,0,0.3);}
+        body.theme-purple{--neon-primary:#9D00FF;--neon-secondary:#FF00FF;--neon-accent:#00F2FF;--neon-danger:#FF007F;--border-color:rgba(157,0,255,0.25);}
+        body.theme-red{--neon-primary:#FF073A;--neon-secondary:#FF4500;--neon-accent:#FFA500;--neon-danger:#FF007F;--border-color:rgba(255,7,58,0.3);}
+        body.theme-green{--neon-primary:#39FF14;--neon-secondary:#ADFF2F;--neon-accent:#E8FF00;--neon-danger:#FF3131;--border-color:rgba(57,255,20,0.3);}
+        body.theme-yellow{--neon-primary:#E8FF00;--neon-secondary:#FFD700;--neon-accent:#FFA500;--neon-danger:#FF4500;--border-color:rgba(232,255,0,0.25);}
+
+
+        /* --- Core Animations --- */
+        @keyframes fadeIn{from{opacity:0;transform:translateY(20px) scale(0.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+        @keyframes press{0%{transform:scale(1)}50%{transform:scale(0.97)}100%{transform:scale(1)}}
+        @keyframes slideInRight{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
+        @keyframes slideOutLeft{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(-100%)}}
+        @keyframes money-fall { 0% { transform: translateY(-100vh) rotateZ(0deg) rotateX(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotateZ(720deg) rotateX(360deg); opacity: 0; } }
+        @keyframes subtle-fall {
+            0% { transform: translateY(0) rotate(0); opacity: 0; }
+            10% { opacity: 0.2; }
+            90% { opacity: 0.2; }
+            100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* --- Base Styles --- */
+        *{margin:0;padding:0;box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+        html { scroll-behavior: smooth; }
+        body{font-family:'Poppins', sans-serif;background:var(--app-bg);color:var(--text-primary);overflow-x:hidden;transition:background 0.5s;padding-top:env(safe-area-inset-top);}
+
+        /* --- Background Effects --- */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -3;
+            pointer-events: none;
+            transition: background 0.5s linear;
+            opacity: 0.3;
+            filter: blur(120px);
+        }
+        body.theme-teal::before    { background: radial-gradient(circle at 15% 20%, var(--neon-primary), transparent 40%), radial-gradient(circle at 85% 80%, var(--neon-secondary), transparent 40%);}
+        body.theme-orange::before  { background: radial-gradient(circle at 15% 20%, var(--neon-primary), transparent 40%), radial-gradient(circle at 85% 80%, var(--neon-secondary), transparent 40%);}
+        body.theme-purple::before  { background: radial-gradient(circle at 15% 20%, var(--neon-primary), transparent 40%), radial-gradient(circle at 85% 80%, var(--neon-secondary), transparent 40%);}
+        body.theme-red::before     { background: radial-gradient(circle at 15% 20%, var(--neon-primary), transparent 40%), radial-gradient(circle at 85% 80%, var(--neon-secondary), transparent 40%);}
+        body.theme-green::before   { background: radial-gradient(circle at 15% 20%, var(--neon-primary), transparent 40%), radial-gradient(circle at 85% 80%, var(--neon-secondary), transparent 40%);}
+        body.theme-yellow::before  { background: radial-gradient(circle at 15% 20%, var(--neon-primary), transparent 40%), radial-gradient(circle at 85% 80%, var(--neon-secondary), transparent 40%);}
+
+        #background-animation-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .falling-money {
+            position: absolute;
+            top: -10%;
+            color: var(--neon-primary);
+            opacity: 0;
+            animation: subtle-fall linear infinite;
+            filter: blur(1px);
+        }
+        body::after{content:'';position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;background:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="1.5" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23n)"/></svg>');opacity:0.03}
+        #animation-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
+        .money { position: absolute; font-size: 2rem; opacity: 0; }
+
+        /* --- Main Layout --- */
+        .container{max-width:550px;margin:0 auto;padding:20px 16px 140px}
+        .view{display:none;min-height:calc(100vh - 220px);}
+        .view.active{display:block;}
+        .view.slide-in { animation: slideInRight 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+        .view.slide-out { animation: slideOutLeft 0.4s cubic-bezier(0.5, 0, 0.75, 0) forwards; }
+        .page-title { font-size: 1.5rem; font-weight: 700; color: var(--neon-primary); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; justify-content: space-between; }
+        .page-title .title-text { flex-grow: 1; }
+        .page-title .back-btn, .page-title .action-btn { background: none; border: none; color: var(--text-secondary); font-size: 1.8rem; cursor: pointer; padding: 0 10px; }
+        .page-title .action-btn { font-size: 1.5rem; }
+
+        /* --- Glassmorphism Elements --- */
+        .glass, .main-input, .glass-button {
+            backdrop-filter:blur(50px) saturate(180%);
+            -webkit-backdrop-filter:blur(50px) saturate(180%);
+            background: rgba(35, 35, 50, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 15px 30px -10px rgba(0,0,0,0.6), inset 0 1px 2px rgba(255,255,255,0.05);
+            transition: all .3s ease;
+        }
+        .glass:hover { transform: translateY(-5px); box-shadow: 0 25px 40px -10px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.05); }
+
+        /* --- Header --- */
+        .header{ padding: 20px; margin-bottom: 20px; border-radius: 28px; margin-top: 20px; text-align: center; }
+        .header h1{ font-size: clamp(2rem, 8vw, 2.8rem); font-weight: 800; letter-spacing:-1.5px; margin: 0; color:var(--neon-primary); text-shadow:0 0 5px var(--neon-primary),0 0 15px var(--neon-primary),0 0 25px rgba(0,242,255,0.7); }
+        .header p{color:var(--text-secondary);font-size:1.1rem; min-height: 1.2em; font-weight: 600;}
+
+        /* --- Tab Bar --- */
+        .tab-bar-container{position:fixed;bottom:20px;left:0;right:0;display:flex;justify-content:center;z-index:1000;pointer-events:none; padding-bottom: env(safe-area-inset-bottom);}
+        .nav-tabs{display:flex;justify-content:space-around;align-items:center;height:70px;width:calc(100% - 40px);max-width:520px;position:relative;pointer-events:auto;padding:0 10px;border-radius:35px;}
+        .nav-indicator{position:absolute;left:0;top:-2px;height:74px;border-radius:37px;background: linear-gradient(145deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));border: 1px solid rgba(255, 255, 255, 0.2);box-shadow: inset 0 2px 4px rgba(0,0,0,0.3), 0 2px 3px rgba(0,0,0,0.2);transition:transform .6s cubic-bezier(.65,0,.35,1),width .6s cubic-bezier(.65,0,.35,1);z-index:1;}
+        .nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-secondary);font-size:.7rem;font-weight:600;cursor:pointer;transition:all .3s ease;gap:4px;z-index:2; padding: 0 5px;}
+        .nav-tab.active{color:var(--text-primary);font-weight:700;transform:scale(1.1)}
+        .nav-tab .icon{font-size:1.5rem;transition:transform .3s ease}
+        .nav-tab.active .icon{transform:translateY(-4px) scale(1.3)}
+
+        /* --- Content Sections --- */
+        .content-section{display:none;animation:fadeIn .6s ease forwards}
+        .content-section.active{display:block}
+        .card{padding:25px;margin-bottom:20px; border-radius: 28px; opacity: 0; transform: translateY(10px); animation: fadeIn 0.5s ease forwards; }
+
+        /* --- Form Elements --- */
+        .input-group { margin-bottom: 20px; position: relative; }
+        .input-group label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-secondary); font-size: 1rem; }
+        .main-input { width: 100%; padding: 16px; font-size: 1.1rem; border-radius: 18px; color: var(--text-primary); -moz-appearance: textfield; }
+        .main-input:focus { border-color: var(--neon-primary); box-shadow: 0 0 10px var(--neon-primary); outline: none; }
+
+        .main-button { display: block; width: 100%; padding: 18px; margin-top: 15px; border-radius: 20px; font-size: 1.1rem; font-weight: 700; cursor: pointer; text-align: center; border: none; background-image: linear-gradient(145deg, var(--neon-primary), var(--neon-secondary)); color: #111; }
+        .main-button:active { animation: press 0.2s 1; }
+
+        .glass-button { display: block; width: 100%; padding: 18px; margin-top: 15px; border-radius: 20px; font-size: 1.1rem; font-weight: 700; cursor: pointer; text-align: center; border: 1px solid var(--border-color); color: var(--text-primary); }
+        .glass-button:hover { border-color: var(--neon-primary); background: rgba(0, 242, 255, 0.1); transform: translateY(-2px); box-shadow: 0 20px 35px -10px rgba(0,0,0,0.6), inset 0 1px 2px rgba(255,255,255,0.05); }
+        .glass-button:active { animation: press 0.2s 1; }
+
+        .glass-button.danger { border-color: var(--neon-danger); color: var(--neon-danger); }
+        .glass-button.danger:hover { background: rgba(255, 7, 58, 0.1); }
+
+        .glass-button.safe { border-color: var(--neon-secondary); color: var(--neon-secondary); }
+        .glass-button.safe:hover { background: rgba(57, 255, 20, 0.1); }
+
+
+        /* --- Custom Select --- */
+        .custom-select-wrapper { position: relative; width: 100%; }
+        .custom-select { position: relative; }
+        .custom-select-trigger { position: relative; display: flex; align-items: center; justify-content: space-between; padding: 16px; font-size: 1.1rem; font-weight: 600; color: var(--text-primary); cursor: pointer; width: 100%; border-radius: 18px; backdrop-filter: blur(50px) saturate(180%); background: rgba(35, 35, 50, 0.15); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 15px 30px -10px rgba(0,0,0,0.6), inset 0 1px 2px rgba(255,255,255,0.05); }
+        .custom-select-trigger::after { content: ''; display: block; width: 8px; height: 8px; border-right: 2px solid var(--text-secondary); border-bottom: 2px solid var(--text-secondary); transform: rotate(45deg); transition: transform .3s ease; }
+        .custom-select.open .custom-select-trigger::after { transform: rotate(225deg); }
+        .custom-options { position: absolute; top: calc(100% + 10px); left: 0; right: 0; z-index: 100; border-radius: 18px; overflow: hidden; opacity: 0; visibility: hidden; transform: translateY(10px); transition: all .3s ease; backdrop-filter: blur(50px) saturate(180%); background: rgba(35, 35, 50, 0.7); border: 1px solid rgba(255, 255, 255, 0.2); max-height: 250px; overflow-y: auto; }
+        .custom-select.open .custom-options { opacity: 1; visibility: visible; transform: translateY(0); }
+        .custom-option { padding: 14px 16px; cursor: pointer; transition: background .2s ease; font-weight: 600; }
+        .custom-option:hover { background: rgba(255,255,255,0.1); }
+        .custom-option.selected { background: var(--neon-primary); color: #000; }
+
+        /* --- Specific Components --- */
+        .empty-state { text-align: center; padding: 40px 20px; }
+        .empty-state .icon { font-size: 3rem; opacity: 0.5; }
+        .empty-state p { margin-top: 10px; color: var(--text-secondary); font-size: 1.1rem; }
+        .section-divider { border: 0; height: 1px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), var(--border-color), rgba(255, 255, 255, 0)); margin: 25px 0; }
+
+        .group-card { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .group-card .info h3 { font-size: 1.3rem; color: var(--text-primary); }
+        .group-card .info p { font-size: 0.9rem; color: var(--text-secondary); }
+        .group-card .total { font-size: 1.5rem; font-weight: 700; color: var(--neon-secondary); }
+
+        .expense-item { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 15px; padding: 12px; border-radius: 15px; background: rgba(0,0,0,0.1); margin-bottom: 10px; cursor: pointer; }
+        .expense-item .icon { font-size: 1.5rem; }
+        .expense-item .details .description { font-weight: 600; }
+        .expense-item .details .paid-by { font-size: 0.8rem; color: var(--text-secondary); }
+        .expense-item .amount { font-weight: 700; font-size: 1.1rem; }
+
+        .balance-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; font-weight: 600; background: rgba(0,0,0,0.2); border-radius: 12px; margin-bottom: 8px; }
+        .balance-item .positive { color: var(--neon-secondary); }
+        .balance-item .negative { color: var(--neon-danger); }
+        .balance-transaction { font-size: 1.1rem; }
+        .balance-transaction .payer { color: var(--neon-danger); }
+        .balance-transaction .payee { color: var(--neon-secondary); }
+
+        .activity-item { padding: 12px; border-left: 3px solid var(--border-color); margin-bottom: 15px; }
+        .activity-item .activity-text { color: var(--text-secondary); }
+        .activity-item .activity-date { font-size: 0.8rem; opacity: 0.6; margin-top: 5px; }
+
+        .participant-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .participant-item { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.1); padding: 10px; border-radius: 12px; }
+        .participant-item input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--neon-primary); cursor: pointer; }
+        .participant-item label { font-weight: 600; width: 100%; cursor: pointer; }
+        .participant-split-input { width: 60px; margin-left: auto; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: var(--text-primary); padding: 4px 8px; border-radius: 8px; text-align: right; }
+
+        /* --- View Selector --- */
+        .view-selector-container { display: flex; justify-content: center; margin-top: 15px; }
+        .view-selector { display: flex; position: relative; padding: 5px; border-radius: 25px; width: 100%; }
+        .view-selector-btn { flex: 1; padding: 10px 5px; font-size: 0.9rem; font-weight: 700; border-radius: 20px; cursor: pointer; color: var(--text-secondary); background: transparent; border: none; box-shadow: none; z-index: 2; transition: color 0.4s ease; }
+        .view-selector-btn.active { color: var(--text-primary); }
+        .view-selector-indicator { position: absolute; left: 5px; top: 5px; height: calc(100% - 10px); border-radius: 20px; background: linear-gradient(145deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05)); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3), 0 2px 3px rgba(0,0,0,0.2); transition: transform .6s cubic-bezier(.65,0,.35,1), width .6s cubic-bezier(.65,0,.35,1); z-index: 1; }
+
+
+        /* --- Modal Styles --- */
+        .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;justify-content:center;align-items:center;z-index:2000;opacity:0;pointer-events:none;transition:opacity .3s ease}
+        .modal.show{opacity:1;pointer-events:auto}
+        .modal-content{width:calc(100% - 40px);max-width:480px;padding:25px;text-align:center; border-radius: 28px; max-height: 85vh; overflow-y: auto;}
+        .modal-close-btn{display:block;width:100%;padding:16px;margin:20px auto 0;border-radius:20px;font-size:1.1rem;font-weight:700;cursor:pointer;text-align:center;border:2px solid var(--neon-danger);color:var(--neon-danger);background:rgba(255,255,255,0.08);}
+        .modal-content::-webkit-scrollbar { width: 8px; }
+        .modal-content::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+
+    </style>
+</head>
+<body class="theme-teal">
+
+<div id="modal" class="modal"><div id="modal-content" class="glass modal-content"></div></div>
+<div id="background-animation-container"></div>
+<div id="animation-container"></div>
+<div id="toast" class="toast" style="position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);backdrop-filter:blur(15px);border:1px solid var(--border-color);color:var(--text-primary);padding:14px 28px;border-radius:16px;font-weight:600;opacity:0;transition:all .4s ease;z-index:9999;pointer-events:none;font-size:1.1rem;box-shadow:0 5px 20px rgba(0,0,0,0.4)"></div>
+<input type="file" id="restore-input" accept=".json" style="display: none;">
+
+<div class="container">
+    <header class="glass header">
+        <h1>DiviFriends</h1>
+        <p id="header-subtitle">Reparte gastos, no amigos 😉</p>
+    </header>
+
+    <main id="main-content">
+        <!-- Views will be dynamically injected here -->
+    </main>
+</div>
+
+<div class="tab-bar-container">
+    <nav class="nav-tabs glass">
+        <div class="nav-indicator"></div>
+        <div class="nav-tab" data-tab="grupos"><span class="icon">🧑‍🤝‍🧑</span><span>Grupos</span></div>
+        <div class="nav-tab" data-tab="saldos"><span class="icon">⚖️</span><span>Saldos</span></div>
+        <div class="nav-tab" data-tab="informe"><span class="icon">📈</span><span>Informe</span></div>
+        <div class="nav-tab" data-tab="ajustes"><span class="icon">⚙️</span><span>Ajustes</span></div>
+    </nav>
+</div>
+
+<script>
+    // --- GLOBAL STATE & CONFIG ---
+    let appData = {};
+    let currentTab = 'grupos';
+    let currentView = 'groupList';
+    let currentGroupId = null;
+    let newGroupData = {};
+    const EXPENSE_CATEGORIES = {
+        '🍕': 'Comida', '🚗': 'Transporte', '🛒': 'Supermercado', '🏠': 'Alojamiento',
+        '🎬': 'Ocio', '🎁': 'Regalos', '✈️': 'Viajes', '☕': 'Café/Bebidas',
+        '🍻': 'Fiesta', '🎟️': 'Entradas', '💊': 'Salud', '💡': 'Servicios',
+        '🛍️': 'Compras', '💸': 'Otro', '🤝': 'Liquidación'
+    };
+    const THEMES = {
+        'theme-teal': 'Teal 💧', 'theme-orange': 'Orange 🔥', 'theme-purple': 'Purple 🔮',
+        'theme-red': 'Red 🌶️', 'theme-green': 'Green 🌳', 'theme-yellow': 'Yellow ⚡️'
+    };
+
+
+    // --- INITIALIZATION ---
+    document.addEventListener("DOMContentLoaded", initApp);
+
+    function initApp() {
+        loadSavedData();
+        const savedTheme = appData.config?.theme || 'theme-teal';
+        changeTheme(savedTheme, true);
+
+        const lastTab = localStorage.getItem("diviFriendsLastTab") || "grupos";
+
+        document.getElementById("modal").addEventListener("click", e => { if (e.target.id === "modal") closeModal(); });
+        document.getElementById("restore-input").addEventListener("change", restoreDataFromFile);
+        document.querySelectorAll(".nav-tab").forEach(tab => {
+            tab.addEventListener("click", () => switchTab(tab.dataset.tab));
+        });
+
+        switchTab(lastTab, true);
+
+        if (!appData.config?.userName) {
+            showOnboarding();
+        }
+    }
+
+    // --- NAVIGATION & VIEW MANAGEMENT ---
+    function switchTab(tab, isInitial = false) {
+        currentTab = tab;
+        localStorage.setItem("diviFriendsLastTab", tab);
+
+        document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+        const activeTab = document.querySelector(`.nav-tab[data-tab="${tab}"]`);
+        activeTab.classList.add("active");
+        updateNavIndicator(activeTab);
+
+        navigateTo('groupList');
+    }
+
+    function updateNavIndicator(activeTab) {
+        const indicator = document.querySelector(".nav-indicator");
+        if (!indicator || !activeTab) return;
+        const navRect = document.querySelector(".nav-tabs").getBoundingClientRect();
+        const tabRect = activeTab.getBoundingClientRect();
+        indicator.style.width = `${tabRect.width}px`;
+        indicator.style.transform = `translateX(${tabRect.left - navRect.left}px)`;
+    }
+
+    function renderCurrentView() {
+        const mainContent = document.getElementById("main-content");
+        let subtitle = 'Reparte gastos, no amigos 😉';
+
+        let viewHTML = '';
+        switch (currentTab) {
+            case "grupos":
+                subtitle = 'Tus Grupos de Gasto 👥';
+                viewHTML = renderGruposView();
+                break;
+            case "saldos":
+                subtitle = 'Saldos Globales ⚖️';
+                viewHTML = renderSaldosView();
+                break;
+            case "informe":
+                subtitle = 'Informe de Grupo y Actividad 📈';
+                viewHTML = renderInformeView();
+                break;
+            case "ajustes":
+                subtitle = 'Configuración y Más ⚙️';
+                viewHTML = renderAjustesView();
+                break;
+        }
+        document.getElementById('header-subtitle').textContent = subtitle;
+        mainContent.innerHTML = `<div class="view content-section active">${viewHTML}</div>`;
+
+        if (currentTab === 'informe' && currentGroupId) {
+            renderGroupStats();
+        }
+
+        applyStaggeredAnimation('.content-section', '.card');
+        applyFocusListener();
+    }
+
+    function navigateTo(view, data = null) {
+        const mainContent = document.getElementById("main-content");
+        const currentActiveView = mainContent.firstChild;
+
+        if (data) {
+            if (view === 'groupDetail' || view === 'editGroup') {
+                currentGroupId = data;
+            } else if (view === 'createGroupStep2') {
+                newGroupData = data;
+            }
+        }
+
+        if (currentActiveView && currentView !== view) {
+            currentActiveView.classList.add('slide-out');
+            currentActiveView.addEventListener('animationend', () => {
+                currentActiveView.remove();
+                currentView = view;
+                renderCurrentView();
+                mainContent.firstChild.classList.add('slide-in');
+            }, { once: true });
+        } else {
+            currentView = view;
+            if (view === 'groupList') currentGroupId = null;
+            renderCurrentView();
+            if (currentActiveView) mainContent.firstChild.classList.add('slide-in');
+        }
+    }
+
+
+    // --- GRUPOS VIEW ---
+    function renderGruposView() {
+        switch (currentView) {
+            case 'groupDetail': return renderGroupDetail();
+            case 'createGroupStep1': return renderCreateGroupStep1();
+            case 'createGroupStep2': return renderCreateGroupStep2();
+            case 'editGroup': return renderEditGroup();
+            case 'groupList':
+            default: return renderGroupList();
+        }
+    }
+
+    function renderGroupList() {
+        const groups = Object.values(appData.groups || {});
+        let listHTML = '';
+
+        if (groups.length > 0) {
+            listHTML = groups.map(group => {
+                const totalSpent = group.expenses.reduce((sum, exp) => exp.isSettlement ? sum : sum + exp.amount, 0);
+                return `
+                    <div class="card glass group-card" onclick="navigateTo('groupDetail', '${group.id}')">
+                        <div class="info">
+                            <h3>${group.name}</h3>
+                            <p>👥 ${group.people.length} personas</p>
+                        </div>
+                        <div class="total">${formatCurrency(totalSpent)}</div>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            listHTML = `<div class="empty-state glass card"><div class="icon">🤷</div><p>Aún no tienes grupos. ¡Crea uno para empezar!</p></div>`;
+        }
+
+        return `
+            ${listHTML}
+            <div class="card glass">
+                <button class="glass-button" onclick="navigateTo('createGroupStep1')">➕ Crear Nuevo Grupo</button>
+            </div>
+            <div class="card glass">
+                 <h3>Invitar a Amigos por NFC 🤝</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                    <button class="glass-button" onclick="handleNfcSend()">Enviar 📤</button>
+                    <button class="glass-button" onclick="handleNfcReceive()">Recibir 📥</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderGroupDetail() {
+        const group = appData.groups[currentGroupId];
+        if (!group) return `<p>Grupo no encontrado.</p>`;
+
+        const expensesList = group.expenses.length > 0 ? group.expenses.sort((a,b) => new Date(b.date) - new Date(a.date)).map(exp => `
+            <div class="expense-item" onclick="openAddExpenseModal('${exp.id}')">
+                <div class="icon">${exp.category || '💸'}</div>
+                <div class="details">
+                    <div class="description">${exp.description}</div>
+                    <div class="paid-by">Pagado por ${exp.paidBy}</div>
+                </div>
+                <div class="amount">${formatCurrency(exp.amount)}</div>
+            </div>
+        `).join('') : `<p class="no-details" style="text-align:center; padding: 20px;">✨ ¡Añade el primer gasto del grupo! ✨</p>`;
+
+        return `
+            <h2 class="page-title">
+                <button class="back-btn" onclick="navigateTo('groupList')">‹</button>
+                <span class="title-text">${group.name}</span>
+                <button class="action-btn" onclick="navigateTo('editGroup', '${group.id}')">✏️</button>
+            </h2>
+            <div class="card glass">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    <input type="search" id="expense-search" class="main-input" placeholder="🔍 Buscar gastos..." oninput="filterExpenses(this.value)">
+                </div>
+                <div id="expenses-list">${expensesList}</div>
+                <button class="main-button" style="margin-top: 20px;" onclick="openAddExpenseModal()">💸 Añadir Gasto</button>
+            </div>
+            <div class="card glass">
+                <h3>Saldos del Grupo ⚖️</h3>
+                <div id="group-balances" style="margin-top: 20px;">${renderGroupBalances(group)}</div>
+            </div>
+             <div class="card glass">
+                <h3>Exportar Grupo 📄</h3>
+                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                    <button class="glass-button" onclick="exportGroupAsText('${group.id}')">Texto 📋</button>
+                    <button class="glass-button" onclick="exportGroupAsCSV('${group.id}')">CSV 💾</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderEditGroup() {
+        const group = appData.groups[currentGroupId];
+        if (!group) return `<p>Grupo no encontrado.</p>`;
+
+        const participantsHTML = group.people.map(p => `
+            <div class="participant-item" style="justify-content: space-between;">
+                <label>${p}</label>
+                ${p !== appData.config.userName ? `<button class="delete-participant-btn" style="background:none; border:none; color:var(--neon-danger); font-size:1.5rem; cursor:pointer;" onclick="removeParticipant('${p}')">&times;</button>` : ''}
+            </div>
+        `).join('');
+
+        return `
+            <h2 class="page-title">
+                <button class="back-btn" onclick="navigateTo('groupDetail', '${group.id}')">‹</button>
+                <span class="title-text">Editar Grupo</span>
+            </h2>
+            <div class="card glass">
+                <div class="input-group">
+                    <label for="edit-group-name">📝 Nombre del Grupo</label>
+                    <input type="text" id="edit-group-name" class="main-input" value="${group.name}">
+                </div>
+                <button class="main-button" onclick="updateGroupName()">Guardar Nombre</button>
+            </div>
+            <div class="card glass">
+                <h3>👥 Participantes</h3>
+                <div class="participant-list" style="grid-template-columns: 1fr;">${participantsHTML}</div>
+                <div class="input-group" style="margin-top: 20px;">
+                    <label for="add-participant-name">Añadir Persona</label>
+                    <input type="text" id="add-participant-name" class="main-input" placeholder="Nuevo nombre...">
+                </div>
+                <button class="glass-button" onclick="addParticipant()">➕ Añadir</button>
+            </div>
+            <div class="card glass">
+                <button class="glass-button danger" onclick="deleteGroup()">🗑️ Eliminar Grupo</button>
+            </div>
+        `;
+    }
+
+    function renderGroupBalances(group) {
+        const balances = calculateBalances(group.expenses, group.people);
+        const transactions = simplifyDebts(balances);
+        if (transactions.length === 0) {
+            return `<p class="no-details" style="text-align:center;">✅ ¡Las cuentas están saldadas! ✅</p>`;
+        }
+        return transactions.map(t => `
+            <div class="balance-item balance-transaction">
+                <span><span class="payer">${t.from}</span> → <span class="payee">${t.to}</span>: <strong>${formatCurrency(t.amount)}</strong></span>
+                <button class="glass-button safe" style="padding: 6px 12px; font-size: 0.8rem; margin:0;" onclick="settleDebt('${group.id}', '${t.from}', '${t.to}', ${t.amount})">Saldar</button>
+            </div>
+        `).join('');
+    }
+
+    function renderCreateGroupStep1() {
+        return `
+            <h2 class="page-title">
+                <button class="back-btn" onclick="navigateTo('groupList')">‹</button>
+                <span class="title-text">Crear Grupo (1/2)</span>
+            </h2>
+            <div class="card glass">
+                <div class="input-group">
+                    <label for="new-group-name">📝 Nombre del Grupo</label>
+                    <input type="text" id="new-group-name" class="main-input" placeholder="Ej: Viaje a la playa 🏖️">
+                </div>
+                <div class="input-group">
+                    <label for="new-group-count">👥 ¿Cuántas personas sois?</label>
+                    <input type="number" id="new-group-count" class="main-input" placeholder="Ej: 4" min="2">
+                </div>
+                <button class="main-button" onclick="processGroupStep1()">Siguiente ➡️</button>
+            </div>
+        `;
+    }
+
+    function processGroupStep1() {
+        const name = document.getElementById('new-group-name').value.trim();
+        const count = parseInt(document.getElementById('new-group-count').value);
+
+        if (!name || !count || count < 2) {
+            showToast("Introduce un nombre y un número de personas válido (mínimo 2).");
+            return;
+        }
+        navigateTo('createGroupStep2', { name, count });
+    }
+
+    function renderCreateGroupStep2() {
+        let nameInputsHTML = '';
+        for (let i = 0; i < newGroupData.count; i++) {
+            const isUser = i === 0;
+            const userName = appData.config?.userName || '';
+            nameInputsHTML += `
+                <div class="input-group">
+                    <label>👤 Nombre Persona ${i + 1}</label>
+                    <input type="text" class="main-input new-group-person-name" value="${isUser ? userName : ''}" ${isUser ? 'readonly' : ''}>
+                </div>
+            `;
+        }
+
+        return `
+            <h2 class="page-title">
+                <button class="back-btn" onclick="navigateTo('createGroupStep1')">‹</button>
+                <span class="title-text">Crear Grupo (2/2)</span>
+            </h2>
+            <div class="card glass">
+                <h3 id="create-group-step2-header" data-group-name="${newGroupData.name}">Participantes de "${newGroupData.name}"</h3>
+                <div style="margin-top: 20px;">${nameInputsHTML}</div>
+                <button class="main-button" onclick="addGroup()">✔️ Crear Grupo Definitivo</button>
+            </div>
+        `;
+    }
+
+    // --- SALDOS VIEW ---
+    function renderSaldosView() {
+        const allExpenses = Object.values(appData.groups || {}).flatMap(g => g.expenses);
+        const allPeople = [...new Set(Object.values(appData.groups || {}).flatMap(g => g.people))];
+
+        if (allPeople.length === 0) {
+            return `<div class="empty-state glass card"><div class="icon">⚖️</div><p>No hay datos para mostrar saldos. ¡Crea un grupo y añade gastos!</p></div>`;
+        }
+
+        const globalBalances = calculateBalances(allExpenses, allPeople);
+        const transactions = simplifyDebts(globalBalances);
+
+        if (transactions.length === 0) {
+            return `<div class="empty-state glass card"><div class="icon">🎉</div><p>¡Todo en orden! No hay deudas pendientes entre grupos.</p></div>`;
+        }
+
+        const userName = appData.config.userName;
+        let userBalance = globalBalances[userName] || 0;
+        let balanceColor = userBalance >= 0 ? 'positive' : 'negative';
+        let balanceText = userBalance >= 0 ? `Tienes un saldo global a favor de ${formatCurrency(userBalance)} 🤑` : `Debes un total de ${formatCurrency(Math.abs(userBalance))} 😥`;
+
+        const transactionsHTML = transactions.map(t => `
+            <div class="balance-item balance-transaction" style="text-align:center; display:block;">
+                <span class="payer">${t.from}</span> ➡️ <span class="payee">${t.to}</span>: <strong>${formatCurrency(t.amount)}</strong>
+            </div>
+        `).join('');
+
+        return `
+            <div class="card glass">
+                <h3>Tu Saldo General 🌍</h3>
+                <div class="balance-item ${balanceColor}" style="font-size: 1.2rem; margin-top: 10px; justify-content:center;">${balanceText}</div>
+            </div>
+            <div class="card glass">
+                <h3>Pagos para Saldar Todo 🤝</h3>
+                <p style="text-align:center; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px;">Estos son los pagos sugeridos para que todos queden a cero. Para saldar una deuda específica, ve al grupo correspondiente.</p>
+                <div style="margin-top: 20px;">${transactionsHTML}</div>
+            </div>
+        `;
+    }
+
+    // --- INFORME VIEW (STATS + ACTIVITY) ---
+    function renderInformeView() {
+        const groups = Object.values(appData.groups || {});
+        if (groups.length === 0) {
+            return `<div class="empty-state glass card"><div class="icon">📈</div><p>Crea un grupo para ver sus estadísticas y actividad.</p></div>`;
+        }
+
+        if (!currentGroupId || !appData.groups[currentGroupId]) {
+            currentGroupId = groups[0].id;
+        }
+
+        const groupOptions = groups.map(g => `<option value="${g.id}" ${g.id === currentGroupId ? 'selected' : ''}>${g.name}</option>`).join('');
+
+        const activities = appData.activities || [];
+        const activityHTML = activities.length > 0
+            ? activities.sort((a,b) => new Date(b.date) - new Date(a.date)).map(act => `
+                <div class="activity-item">
+                    <div class="activity-text">${act.text}</div>
+                    <div class="activity-date">🗓️ ${new Date(act.date).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+                </div>
+            `).join('')
+            : `<div class="empty-state"><div class="icon">🧐</div><p>No hay actividad reciente.</p></div>`;
+
+        // --- FIX 1 START: Added wrappers with fixed height for charts ---
+        return `
+            <div class="card glass">
+                <h3>Estadísticas de Grupo</h3>
+                <div class="input-group">
+                    <label>Selecciona un Grupo</label>
+                    <select id="stats-group-selector" onchange="switchStatsGroup(this.value)">
+                        ${groupOptions}
+                    </select>
+                </div>
+                <div style="position: relative; height: 280px; margin-bottom: 20px;">
+                    <canvas id="category-chart"></canvas>
+                </div>
+                <div style="position: relative; height: 280px;">
+                    <canvas id="timeline-chart"></canvas>
+                </div>
+            </div>
+            <div class="card glass">
+                <h3>Actividad Reciente</h3>
+                ${activityHTML}
+            </div>
+        `;
+        // --- FIX 1 END ---
+    }
+
+    function switchStatsGroup(groupId) {
+        currentGroupId = groupId;
+        renderGroupStats();
+    }
+
+    function renderGroupStats() {
+        const group = appData.groups[currentGroupId];
+        const categoryCanvas = document.getElementById('category-chart');
+        const timelineCanvas = document.getElementById('timeline-chart');
+
+        if (!group || !categoryCanvas || !timelineCanvas) return;
+
+        const expensesToChart = group.expenses.filter(e => !e.isSettlement);
+
+        if (expensesToChart.length === 0) {
+            categoryCanvas.parentElement.style.display = 'none';
+            timelineCanvas.parentElement.style.display = 'none';
+            return;
+        }
+        categoryCanvas.parentElement.style.display = 'block';
+        timelineCanvas.parentElement.style.display = 'block';
+
+        // Data for Category Chart
+        const categoryData = {};
+        expensesToChart.forEach(exp => {
+            const category = exp.category || '💸';
+            if (!categoryData[category]) categoryData[category] = 0;
+            categoryData[category] += exp.amount;
+        });
+
+        const categoryLabels = Object.keys(categoryData).map(c => `${c} ${EXPENSE_CATEGORIES[c] || 'Otro'}`);
+        const categoryValues = Object.values(categoryData);
+
+        // Data for Timeline Chart
+        const timelineData = expensesToChart.map(exp => ({
+            x: new Date(exp.date),
+            y: exp.amount
+        })).sort((a, b) => a.x - b.x);
+
+        drawChart('category-chart', 'doughnut', categoryLabels, categoryValues, 'Gastos por Categoría');
+        drawChart('timeline-chart', 'line', null, timelineData, 'Gastos en el Tiempo');
+    }
+
+    function drawChart(canvasId, type, labels, data, title) {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        const existingChart = Chart.getChart(canvasId);
+        if (existingChart) {
+            existingChart.destroy();
+        }
+
+        const themeColors = [
+            getComputedStyle(document.body).getPropertyValue('--neon-primary'),
+            getComputedStyle(document.body).getPropertyValue('--neon-secondary'),
+            getComputedStyle(document.body).getPropertyValue('--neon-accent'),
+            '#9D00FF', '#FF073A', '#FFD700'
+        ];
+
+        const chartConfig = {
+            type: type,
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: title,
+                    data: data,
+                    backgroundColor: type === 'doughnut' ? themeColors : getComputedStyle(document.body).getPropertyValue('--neon-primary')+'33',
+                    borderColor: getComputedStyle(document.body).getPropertyValue('--neon-primary'),
+                    borderWidth: 2,
+                    fill: type === 'line'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false, // Set to false to respect container height
+                plugins: {
+                    legend: {
+                        position: type === 'doughnut' ? 'top' : 'none',
+                        labels: { color: 'var(--text-secondary)', font: { family: "'Poppins', sans-serif" } }
+                    },
+                    title: { display: false }
+                },
+                layout: { padding: 10 }
+            }
+        };
+
+        if (type === 'line') {
+            chartConfig.options.scales = {
+                x: {
+                    type: 'time',
+                    time: { unit: 'day' },
+                    ticks: { color: 'var(--text-secondary)', font: { family: "'Poppins', sans-serif" } },
+                    grid: { color: 'rgba(255,255,255,0.1)' }
+                },
+                y: {
+                    ticks: { color: 'var(--text-secondary)', font: { family: "'Poppins', sans-serif" } },
+                    grid: { color: 'rgba(255,255,255,0.1)' }
+                }
+            };
+        }
+
+        new Chart(ctx, chartConfig);
+    }
+
+    // --- AJUSTES VIEW ---
+    function renderAjustesView() {
+        const currentTheme = appData.config?.theme || 'theme-teal';
+        let themeButtonsHTML = '';
+        for (const themeKey in THEMES) {
+            themeButtonsHTML += `<button class="view-selector-btn ${currentTheme === themeKey ? 'active' : ''}" onclick="changeTheme('${themeKey}')">${THEMES[themeKey]}</button>`;
+        }
+
+        setTimeout(() => updateThemeSelectorIndicator(), 50);
+
+        return `
+            <div class="card glass">
+                <h3>⚙️ Ajustes</h3>
+                <div class="settings-modal-section">
+                    <h4>🎨 Cambiar Tema</h4>
+                    <div class="view-selector-container">
+                        <div id="theme-selector" class="view-selector glass">
+                            <div class="view-selector-indicator"></div>
+                            ${themeButtonsHTML}
+                        </div>
+                    </div>
+                </div>
+                <div class="section-divider"></div>
+                <h4>💾 Gestión de Datos</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                    <button class="glass-button safe" onclick="backupData()">Respaldar ⬆️</button>
+                    <button class="glass-button safe" onclick="triggerRestore()">Restaurar ⬇️</button>
+                </div>
+                <button class="glass-button danger" style="margin-top: 10px;" onclick="deleteAllData()">🗑️ Eliminar Todos los Datos</button>
+            </div>
+        `;
+    }
+
+    // --- MODALS ---
+    function openAddExpenseModal(expenseId = null) {
+        const group = appData.groups[currentGroupId];
+        const expense = expenseId ? group.expenses.find(e => e.id === expenseId) : null;
+
+        const peopleOptions = group.people.map(p => `<option value="${p}" ${expense && expense.paidBy === p ? 'selected' : ''}>${p}</option>`).join('');
+        const participantsCheckboxes = group.people.map(p => {
+            const isChecked = expense ? expense.participants.includes(p) : true;
+            return `
+            <div class="participant-item">
+                <label>
+                    <input type="checkbox" class="participant-checkbox" value="${p}" ${isChecked ? 'checked' : ''}>
+                    <span>${p}</span>
+                </label>
+            </div>
+        `}).join('');
+
+        const categoryOptions = Object.keys(EXPENSE_CATEGORIES).filter(c => c !== '🤝').map(icon => {
+            const isSelected = expense && expense.category === icon;
+            return `<span style="font-size:1.8rem; cursor:pointer; padding:5px; border-radius:10px; background: ${isSelected ? 'var(--neon-primary)' : 'transparent'};" data-category="${icon}">${icon}</span>`;
+        }).join('');
+
+        const modalContent = `
+            <h3>${expenseId ? '✏️ Editar Gasto' : '💸 Añadir Gasto'}</h3>
+            <div class="input-group"><label>Descripción</label><input type="text" id="expense-desc" class="main-input" value="${expense ? expense.description : ''}" placeholder="Ej: Cena en el chiringuito"></div>
+            <div class="input-group"><label>Importe (€)</label><input type="number" id="expense-amount" class="main-input" value="${expense ? expense.amount : ''}"></div>
+            <div class="input-group"><label>Categoría</label><div class="icon-selector" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center;">${categoryOptions}</div></div>
+            <div class="input-group"><label>Pagado por</label><select id="expense-paidby">${peopleOptions}</select></div>
+            <div class="input-group"><label>Participantes</label><div class="participant-list">${participantsCheckboxes}</div></div>
+            <button class="main-button" onclick="addOrUpdateExpense('${expenseId || ''}')">${expenseId ? 'Guardar Cambios' : 'Añadir Gasto'}</button>
+            ${expenseId ? `<button class="glass-button danger" style="margin-top: 10px;" onclick="deleteExpense('${expenseId}')">Eliminar Gasto</button>` : ''}
+        `;
+        showModal(modalContent);
+        upgradeSelectToCustom(document.getElementById('expense-paidby'));
+        document.querySelectorAll('.icon-selector span').forEach(span => {
+            span.addEventListener('click', e => {
+                document.querySelectorAll('.icon-selector span').forEach(s => s.style.background = 'transparent');
+                e.currentTarget.style.background = 'var(--neon-primary)';
+            });
+        });
+    }
+
+    // --- CORE LOGIC ---
+    function addGroup() {
+        const name = newGroupData.name;
+        const nameInputs = document.querySelectorAll('.new-group-person-name');
+        const people = [...new Set(Array.from(nameInputs).map(input => input.value.trim()).filter(p => p))];
+
+        if (people.length !== nameInputs.length) {
+            showToast("Por favor, introduce un nombre único para cada persona. ☝️");
+            return;
+        }
+
+        const groupId = 'group-' + Date.now();
+        if (!appData.groups) appData.groups = {};
+        appData.groups[groupId] = { id: groupId, name: name, people: people, expenses: [] };
+        logActivity(`Se creó el grupo "<strong>${name}</strong>" 🎉.`);
+        saveDataToLocal();
+        newGroupData = {};
+        navigateTo('groupList');
+        showToast(`¡Grupo "${name}" creado con éxito! 🥳`);
+        triggerMoneyAnimation();
+    }
+
+    function addOrUpdateExpense(expenseId) {
+        const desc = document.getElementById('expense-desc').value.trim();
+        const amount = parseFloat(document.getElementById('expense-amount').value);
+        const paidBy = document.getElementById('expense-paidby').value;
+        const selectedCategory = document.querySelector('.icon-selector span[style*="background"]')?.dataset.category || '💸';
+        const participants = Array.from(document.querySelectorAll('.participant-checkbox:checked')).map(cb => cb.value);
+
+        if (!desc || !amount || amount <= 0 || participants.length === 0) {
+            showToast("Completa todos los campos correctamente. 🧐");
+            return;
+        }
+
+        const group = appData.groups[currentGroupId];
+        if (expenseId) { // Update
+            const expenseIndex = group.expenses.findIndex(e => e.id === expenseId);
+            if (expenseIndex > -1) {
+                group.expenses[expenseIndex] = { ...group.expenses[expenseIndex], description: desc, amount, paidBy, participants, category: selectedCategory };
+                logActivity(`Se editó un gasto de ${formatCurrency(amount)} en "<strong>${group.name}</strong>".`);
+                showToast("Gasto actualizado 💾");
+            }
+        } else { // Add new
+            group.expenses.push({ id: 'exp-' + Date.now(), description: desc, amount, paidBy, participants, category: selectedCategory, date: new Date().toISOString() });
+            logActivity(`Se añadió un gasto de ${formatCurrency(amount)} por "<strong>${desc}</strong>" en "<strong>${group.name}</strong>".`);
+            showToast("Gasto añadido 💸");
+            triggerMoneyAnimation();
+        }
+
+        saveDataToLocal();
+        closeModal();
+        renderCurrentView();
+    }
+
+    function deleteExpense(expenseId) {
+        showConfirmationModal('<h3>🗑️ Eliminar Gasto</h3>', '¿Estás seguro de que quieres eliminar este gasto? Esta acción no se puede deshacer.', () => {
+            const group = appData.groups[currentGroupId];
+            const expense = group.expenses.find(e => e.id === expenseId);
+            group.expenses = group.expenses.filter(e => e.id !== expenseId);
+            logActivity(`Se eliminó el gasto "<strong>${expense.description}</strong>" de "<strong>${group.name}</strong>".`);
+            saveDataToLocal();
+            closeModal();
+            renderCurrentView();
+            showToast("Gasto eliminado.");
+        });
+    }
+
+    function updateGroupName() {
+        const newName = document.getElementById('edit-group-name').value.trim();
+        if (!newName) {
+            showToast("El nombre del grupo no puede estar vacío.");
+            return;
+        }
+        const group = appData.groups[currentGroupId];
+        const oldName = group.name;
+        group.name = newName;
+        logActivity(`El grupo "<strong>${oldName}</strong>" ahora se llama "<strong>${newName}</strong>".`);
+        saveDataToLocal();
+        showToast("Nombre del grupo actualizado.");
+        renderCurrentView();
+    }
+
+    function addParticipant() {
+        const newParticipant = document.getElementById('add-participant-name').value.trim();
+        const group = appData.groups[currentGroupId];
+        if (!newParticipant || group.people.includes(newParticipant)) {
+            showToast("Introduce un nombre válido y que no exista ya en el grupo.");
+            return;
+        }
+        group.people.push(newParticipant);
+        logActivity(`<strong>${newParticipant}</strong> se ha unido al grupo "<strong>${group.name}</strong>".`);
+        saveDataToLocal();
+        renderCurrentView();
+    }
+
+    function removeParticipant(participantName) {
+        const group = appData.groups[currentGroupId];
+        const hasExpenses = group.expenses.some(e => e.paidBy === participantName || e.participants.includes(participantName));
+        if (hasExpenses) {
+            showToast("No se puede eliminar a un participante con gastos asociados.");
+            return;
+        }
+        showConfirmationModal('<h3>Quitar Participante</h3>', `¿Seguro que quieres quitar a <strong>${participantName}</strong> del grupo?`, () => {
+            group.people = group.people.filter(p => p !== participantName);
+            logActivity(`<strong>${participantName}</strong> ha sido eliminado del grupo "<strong>${group.name}</strong>".`);
+            saveDataToLocal();
+            renderCurrentView();
+        });
+    }
+
+    function deleteGroup() {
+        const group = appData.groups[currentGroupId];
+        showConfirmationModal('<h3>🗑️ Eliminar Grupo</h3>', `¿Seguro que quieres eliminar el grupo "<strong>${group.name}</strong>"? Se perderán todos sus gastos.`, () => {
+            delete appData.groups[currentGroupId];
+            logActivity(`Se eliminó el grupo "<strong>${group.name}</strong>".`);
+            saveDataToLocal();
+            navigateTo('groupList');
+            showToast("Grupo eliminado.");
+        });
+    }
+
+    function settleDebt(groupId, from, to, amount) {
+        const group = appData.groups[groupId];
+        showConfirmationModal('<h3>🤝 Saldar Deuda</h3>', `¿Confirmas que <strong>${from}</strong> ha pagado <strong>${formatCurrency(amount)}</strong> a <strong>${to}</strong>?`, () => {
+            group.expenses.push({
+                id: 'exp-' + Date.now(),
+                description: `Pago de ${from} a ${to}`,
+                amount: amount,
+                paidBy: from,
+                participants: [to],
+                category: '🤝',
+                isSettlement: true,
+                date: new Date().toISOString()
+            });
+            logActivity(`<strong>${from}</strong> ha saldado una deuda de ${formatCurrency(amount)} con <strong>${to}</strong> en "<strong>${group.name}</strong>".`);
+            saveDataToLocal();
+            renderCurrentView();
+            showToast("Deuda saldada. ¡Bien hecho! 👍");
+        });
+    }
+
+    function calculateBalances(expenses, people) {
+        const balances = {};
+        people.forEach(p => balances[p] = 0);
+
+        expenses.forEach(exp => {
+            // --- FIX 2 START: Corrected settlement logic ---
+            // The person who pays ('from'/'paidBy') is contributing, so their balance increases.
+            // The person who receives ('to'/'participants[0]') has their debt reduced, so their balance decreases.
+            if (exp.isSettlement) {
+                balances[exp.paidBy] += exp.amount;
+                balances[exp.participants[0]] -= exp.amount;
+            } else {
+            // --- FIX 2 END ---
+                balances[exp.paidBy] += exp.amount;
+                const share = exp.amount / exp.participants.length;
+                exp.participants.forEach(p => {
+                    if (balances[p] !== undefined) balances[p] -= share;
+                });
+            }
+        });
+        return balances;
+    }
+
+    function simplifyDebts(balances) {
+        const debtors = [];
+        const creditors = [];
+        for (const person in balances) {
+            if (balances[person] < -0.01) debtors.push({ name: person, amount: balances[person] });
+            if (balances[person] > 0.01) creditors.push({ name: person, amount: balances[person] });
+        }
+
+        const transactions = [];
+        debtors.sort((a,b) => a.amount - b.amount);
+        creditors.sort((a,b) => b.amount - a.amount);
+
+        while (debtors.length > 0 && creditors.length > 0) {
+            const debtor = debtors[0];
+            const creditor = creditors[0];
+            const amount = Math.min(-debtor.amount, creditor.amount);
+
+            transactions.push({ from: debtor.name, to: creditor.name, amount: amount });
+
+            debtor.amount += amount;
+            creditor.amount -= amount;
+
+            if (Math.abs(debtor.amount) < 0.01) debtors.shift();
+            if (Math.abs(creditor.amount) < 0.01) creditors.shift();
+        }
+        return transactions;
+    }
+
+    function filterExpenses(query) {
+        const group = appData.groups[currentGroupId];
+        const lowerCaseQuery = query.toLowerCase();
+        const filteredExpenses = group.expenses.filter(exp =>
+            exp.description.toLowerCase().includes(lowerCaseQuery)
+        );
+
+        const expensesListHTML = filteredExpenses.sort((a,b) => new Date(b.date) - new Date(a.date)).map(exp => `
+            <div class="expense-item" onclick="openAddExpenseModal('${exp.id}')">
+                <div class="icon">${exp.category || '💸'}</div>
+                <div class="details">
+                    <div class="description">${exp.description}</div>
+                    <div class="paid-by">Pagado por ${exp.paidBy}</div>
+                </div>
+                <div class="amount">${formatCurrency(exp.amount)}</div>
+            </div>
+        `).join('');
+
+        document.getElementById('expenses-list').innerHTML = filteredExpenses.length > 0 ? expensesListHTML : `<p class="no-details" style="text-align:center; padding: 20px;">No se encontraron gastos.</p>`;
+    }
+
+    // --- NFC & SHARING FUNCTIONALITY ---
+    function handleNfcSend() {
+        if (typeof AndroidBridge !== 'undefined' && AndroidBridge.checkNfcStatus) {
+            if (AndroidBridge.checkNfcStatus()) {
+                openNfcGroupSelectModal();
+            } else {
+                showEnableNfcModal();
+            }
+        } else {
+            showToast("Función NFC no disponible.");
+        }
+    }
+
+    function handleNfcReceive() {
+        if (typeof AndroidBridge !== 'undefined' && AndroidBridge.checkNfcStatus) {
+            if (AndroidBridge.checkNfcStatus()) {
+                receiveNfcInvite();
+            } else {
+                showEnableNfcModal();
+            }
+        } else {
+            showToast("Función NFC no disponible.");
+        }
+    }
+
+    function showEnableNfcModal() {
+        showConfirmationModal(
+            '<h3>Activar NFC</h3>',
+            'El NFC de tu dispositivo está desactivado. ¿Quieres ir a los ajustes para activarlo?',
+            () => {
+                if (typeof AndroidBridge !== 'undefined' && AndroidBridge.openNfcSettings) {
+                    AndroidBridge.openNfcSettings();
+                }
+            },
+            'Ir a Ajustes',
+            'Ahora no'
+        );
+    }
+
+    function openNfcGroupSelectModal() {
+        const groups = Object.values(appData.groups || {});
+        if (groups.length === 0) {
+            showToast("Primero debes crear un grupo para poder invitar.");
+            return;
+        }
+        let groupsHTML = groups.map(group =>
+            `<button class="glass-button" style="margin-top: 10px;" onclick="sendNfcInvite('${group.id}')">${group.name}</button>`
+        ).join('');
+
+        const modalContent = `
+            <h3>Enviar Invitación NFC</h3>
+            <p style="margin: 15px 0;">Selecciona el grupo al que quieres invitar:</p>
+            ${groupsHTML}
+        `;
+        showModal(modalContent, true);
+    }
+
+    function sendNfcInvite(groupId) {
+        const group = appData.groups[groupId];
+        if (!group) return;
+
+        const groupData = {
+            id: group.id,
+            name: group.name,
+            people: group.people,
+            expenses: []
+        };
+        const groupDataJSON = JSON.stringify(groupData);
+
+        if (typeof AndroidBridge !== 'undefined' && AndroidBridge.prepareNfcSharing) {
+            AndroidBridge.prepareNfcSharing(groupDataJSON);
+            showModal(`
+                <h3>Listo para Enviar</h3>
+                <p style="margin: 20px 0;">Acerca la parte trasera de tu móvil a la del otro dispositivo para enviar la invitación.</p>
+                <div style="font-size: 4rem; margin: 20px 0;">📲</div>
+            `, true);
+        } else {
+            showToast("Función NFC no disponible.");
+        }
+    }
+
+    function receiveNfcInvite() {
+        if (typeof AndroidBridge !== 'undefined' && AndroidBridge.enableNfcReader) {
+            AndroidBridge.enableNfcReader();
+            showModal(`
+                <h3>Esperando Invitación</h3>
+                <p style="margin: 20px 0;">Acerca tu móvil al otro dispositivo para recibir la invitación por NFC.</p>
+                <div style="font-size: 4rem; margin: 20px 0;">📥</div>
+            `, true);
+        } else {
+            showToast("Función NFC no disponible.");
+        }
+    }
+
+    function handleNfcDataReceived(groupDataJSON) {
+        closeModal();
+        try {
+            const groupData = JSON.parse(groupDataJSON);
+            processGroupInvitation(groupData);
+        } catch (e) {
+            showToast("Error al leer la invitación. 😕");
+            console.error("Error parsing NFC JSON:", e);
+        }
+    }
+
+    function processGroupInvitation(groupData) {
+        if (!groupData || !groupData.id) {
+            showToast("Invitación no válida.");
+            return;
+        }
+
+        if (appData.groups[groupData.id]) {
+            showToast(`Ya eres miembro de "${groupData.name}" 👍`);
+            navigateTo('groupDetail', groupData.id);
+            return;
+        }
+
+        appData.groups[groupData.id] = {
+            id: groupData.id,
+            name: groupData.name,
+            people: groupData.people,
+            expenses: []
+        };
+
+        const userName = appData.config.userName;
+        const userIsAlreadyInGroup = groupData.people.includes(userName);
+
+        let modalContent = `
+            <h3>Unirse al Grupo</h3>
+            <p style="margin: 15px 0;">Has sido invitado a unirte al grupo "<strong>${groupData.name}</strong>".</p>
+        `;
+
+        if (userIsAlreadyInGroup) {
+            modalContent += `
+                <p>Parece que ya estás en la lista como "<strong>${userName}</strong>".</p>
+                <button class="main-button" onclick="confirmJoin('${groupData.id}', true)">✔️ Confirmar y Ver Grupo</button>
+            `;
+        } else {
+            modalContent += `
+                <p>¿Quieres unirte como "<strong>${userName}</strong>"?</p>
+                <button class="main-button" onclick="confirmJoin('${groupData.id}', false)">✔️ Sí, Unirme</button>
+            `;
+        }
+        showModal(modalContent);
+    }
+
+    function confirmJoin(groupId, userAlreadyExists) {
+        const group = appData.groups[groupId];
+        if (!group) return;
+
+        if (!userAlreadyExists) {
+            group.people.push(appData.config.userName);
+            logActivity(`<strong>${appData.config.userName}</strong> se ha unido al grupo "<strong>${group.name}</strong>".`);
+        }
+
+        saveDataToLocal();
+        showToast(`¡Te has unido a "${group.name}"! 🎉`);
+        closeModal();
+        navigateTo('groupDetail', groupId);
+    }
+
+
+    // --- DATA & STATE MANAGEMENT ---
+    function saveDataToLocal() {
+        try {
+            localStorage.setItem("diviFriendsData", JSON.stringify(appData));
+        } catch (error) {
+            console.error("Error saving data:", error);
+            showToast("❌ Error al guardar datos.");
+        }
+    }
+
+    function loadSavedData() {
+        try {
+            const data = localStorage.getItem("diviFriendsData");
+            appData = data ? JSON.parse(data) : {};
+            if (!appData.config) appData.config = {};
+            if (!appData.groups) appData.groups = {};
+            if (!appData.activities) appData.activities = [];
+        } catch (error) {
+            console.error("Error loading data:", error);
+            appData = { config: {}, groups: {}, activities: [] };
+        }
+    }
+
+    function logActivity(text) {
+        if (!appData.activities) appData.activities = [];
+        appData.activities.push({ text: text, date: new Date().toISOString() });
+        if (appData.activities.length > 100) { // Increased limit
+            appData.activities.shift();
+        }
+    }
+
+    function backupData() {
+        if (typeof AndroidBridge !== 'undefined' && AndroidBridge.saveFile) {
+            const dataToSave = JSON.stringify(appData, null, 2);
+            const date = new Date().toISOString().slice(0, 10);
+            const fileName = `divifriends_backup_${date}.json`;
+            AndroidBridge.saveFile(fileName, dataToSave);
+        } else {
+            showToast("Función solo disponible en la app de Android.");
+        }
+    }
+
+    function triggerRestore() {
+        document.getElementById('restore-input').click();
+    }
+
+    function restoreDataFromFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const restoredData = JSON.parse(e.target.result);
+                appData = restoredData;
+                saveDataToLocal();
+                showToast("🔄 ¡Datos restaurados!");
+                setTimeout(() => location.reload(), 1000);
+            } catch (err) {
+                showToast("❌ Error al leer el archivo.");
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function deleteAllData() {
+        showConfirmationModal(
+            '<h3>⚠️ Eliminar Todo</h3>',
+            '¿Seguro que quieres eliminar TODOS tus datos? Esta acción no se puede deshacer.',
+            () => {
+                localStorage.removeItem('diviFriendsData');
+                localStorage.removeItem('diviFriendsLastTab');
+                appData = { config: {}, groups: {}, activities: [] };
+                showToast("🗑️ Todos los datos eliminados.");
+                closeModal();
+                setTimeout(() => location.reload(), 1000);
+            }
+        );
+    }
+
+    function exportGroupAsText(groupId) {
+        const group = appData.groups[groupId];
+        let text = `Resumen del Grupo: ${group.name}\n`;
+        text += `=========================\n\n`;
+        text += `Participantes: ${group.people.join(', ')}\n\n`;
+        text += `--- Gastos ---\n`;
+        group.expenses.forEach(exp => {
+            text += `- ${exp.description} (${formatCurrency(exp.amount)}), pagado por ${exp.paidBy}\n`;
+        });
+        text += `\n--- Saldos ---\n`;
+        const balances = calculateBalances(group.expenses, group.people);
+        const transactions = simplifyDebts(balances);
+        if (transactions.length > 0) {
+            transactions.forEach(t => {
+                text += `${t.from} debe a ${t.to}: ${formatCurrency(t.amount)}\n`;
+            });
+        } else {
+            text += `¡Todos están en paz!\n`;
+        }
+
+        showModal(`<h3>📋 Copiar Resumen</h3><textarea class="main-input" style="height: 200px; margin-top:15px;" readonly>${text}</textarea>`, true);
+    }
+
+    function exportGroupAsCSV(groupId) {
+        const group = appData.groups[groupId];
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Descripcion,Importe,Moneda,Pagado Por,Participantes,Categoria,Fecha\n";
+
+        group.expenses.forEach(exp => {
+            const row = [
+                `"${exp.description}"`,
+                exp.amount,
+                "EUR",
+                `"${exp.paidBy}"`,
+                `"${exp.participants.join('; ')}"`,
+                `"${EXPENSE_CATEGORIES[exp.category] || 'Otro'}"`,
+                new Date(exp.date).toISOString()
+            ].join(',');
+            csvContent += row + "\n";
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `gastos_${group.name.replace(/\s+/g, '_')}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        showToast("Exportando CSV... 💾");
+    }
+
+    // --- UI & UTILS ---
+    function triggerMoneyAnimation() {
+        const container = document.getElementById('animation-container');
+        if (!container) return;
+        for (let i = 0; i < 30; i++) {
+            const money = document.createElement('div');
+            money.classList.add('money');
+            money.textContent = '💵';
+            money.style.left = `${Math.random() * 100}vw`;
+            money.style.animation = `money-fall ${2 + Math.random() * 2}s ease-in ${Math.random() * 0.5}s forwards`;
+            container.appendChild(money);
+            setTimeout(() => money.remove(), 4000);
+        }
+    }
+
+    function changeTheme(themeKey, isInit = false) {
+        document.body.className = '';
+        document.body.classList.add(themeKey);
+        if (appData.config) appData.config.theme = themeKey;
+        saveDataToLocal();
+        initMoneyBackground();
+
+        if (!isInit) {
+            showToast('🎨 Tema cambiado');
+            const selector = document.getElementById('theme-selector');
+            if (selector) {
+                selector.querySelectorAll('.view-selector-btn').forEach(btn => btn.classList.remove('active'));
+                selector.querySelector(`[onclick="changeTheme('${themeKey}')"]`).classList.add('active');
+                updateThemeSelectorIndicator();
+            }
+            if(currentTab === 'informe' && currentGroupId) renderGroupStats();
+        }
+    }
+
+    function updateThemeSelectorIndicator() {
+        const container = document.getElementById('theme-selector');
+        if (!container) return;
+        const indicator = container.querySelector(".view-selector-indicator");
+        const activeTab = container.querySelector(".view-selector-btn.active");
+        if (!indicator || !activeTab) return;
+
+        const paddingLeft = parseFloat(getComputedStyle(container).paddingLeft);
+        indicator.style.width = `${activeTab.offsetWidth}px`;
+        indicator.style.transform = `translateX(${activeTab.offsetLeft - paddingLeft}px)`;
+    }
+
+    function initMoneyBackground() {
+        const container = document.getElementById('background-animation-container');
+        if (!container) return;
+        container.innerHTML = '';
+        const numberOfBills = 15;
+        const billTypes = ['💸', '💶', '💰'];
+
+        for (let i = 0; i < numberOfBills; i++) {
+            const money = document.createElement('div');
+            money.classList.add('falling-money');
+            money.textContent = billTypes[Math.floor(Math.random() * billTypes.length)];
+            money.style.left = `${Math.random() * 100}vw`;
+            const duration = 15 + Math.random() * 10;
+            const delay = Math.random() * 20;
+            money.style.animationDuration = `${duration}s`;
+            money.style.animationDelay = `${delay}s`;
+            money.style.fontSize = `${1 + Math.random() * 1.5}rem`;
+            container.appendChild(money);
+        }
+    }
+
+
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value || 0);
+    }
+
+    function showToast(message) {
+        const toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.style.opacity = 1;
+        setTimeout(() => { toast.style.opacity = 0; }, 2500);
+    }
+
+    function showModal(content, showCloseButton = true) {
+        const modalContentEl = document.getElementById("modal-content");
+        modalContentEl.innerHTML = content;
+        modalContentEl.classList.add('glass');
+        if (showCloseButton) {
+            modalContentEl.innerHTML += '<button class="modal-close-btn" onclick="closeModal()">Cerrar</button>';
+        }
+        document.getElementById("modal").classList.add("show");
+        applyFocusListener();
+    }
+
+    function showConfirmationModal(title, message, onConfirm, confirmText = 'Confirmar', cancelText = 'Cancelar') {
+        const modalContent = `
+            ${title}
+            <p style="color: var(--text-secondary); margin-top: 10px; margin-bottom: 25px;">${message}</p>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="closeModal()" class="glass-button danger" style="flex:1; margin-top:0;">${cancelText}</button>
+                <button id="confirm-action-btn" class="glass-button safe" style="flex:1; margin-top:0;">${confirmText}</button>
+            </div>
+        `;
+        showModal(modalContent, false);
+        document.getElementById('confirm-action-btn').onclick = () => {
+            onConfirm();
+            closeModal();
+        };
+    }
+
+    function closeModal() {
+        if (typeof AndroidBridge !== 'undefined' && AndroidBridge.disableNfcReader) {
+            AndroidBridge.disableNfcReader();
+        }
+        document.getElementById("modal").classList.remove("show");
+    }
+
+    function showOnboarding() {
+        const content = `
+            <h3>👋 ¡Bienvenido a DiviFriends!</h3>
+            <p style="text-align: left; margin-bottom: 15px;">Para empezar, dinos tu nombre. Se usará para añadirte automáticamente a los grupos que crees.</p>
+            <div class="input-group">
+                <label for="user-name-onboarding">Tu nombre</label>
+                <input type="text" id="user-name-onboarding" class="main-input" placeholder="Tu nombre aquí...">
+            </div>
+            <button class="main-button" onclick="closeOnboarding()">🚀 ¡A repartir gastos!</button>
+        `;
+        showModal(content, false);
+    }
+
+    function closeOnboarding() {
+        const userNameInput = document.getElementById('user-name-onboarding');
+        const userName = userNameInput.value.trim();
+        if (!userName) {
+            showToast("Por favor, introduce tu nombre.");
+            return;
+        }
+        appData.config.userName = userName;
+        saveDataToLocal();
+        closeModal();
+        renderCurrentView();
+    }
+
+    function applyStaggeredAnimation(containerSelector, elementSelector) {
+        const container = document.querySelector(containerSelector);
+        if (!container) return;
+        const elements = container.querySelectorAll(elementSelector);
+        elements.forEach((el, index) => {
+            el.style.animationDelay = `${index * 80}ms`;
+        });
+    }
+
+    function applyFocusListener() {
+        document.querySelectorAll('input, textarea, select').forEach(input => {
+            input.addEventListener('focus', (event) => {
+                setTimeout(() => {
+                    event.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 350);
+            });
+            if (input.tagName === 'SELECT' && !input.parentElement.classList.contains('custom-select-wrapper')) {
+                upgradeSelectToCustom(input);
+            }
+        });
+    }
+
+    function upgradeSelectToCustom(selectElement) {
+        if (!selectElement || selectElement.parentElement.classList.contains('custom-select-wrapper')) return;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'custom-select-wrapper';
+        const customSelect = document.createElement('div');
+        customSelect.className = 'custom-select';
+        const trigger = document.createElement('div');
+        trigger.className = 'custom-select-trigger';
+        const optionsContainer = document.createElement('div');
+        optionsContainer.className = 'custom-options';
+        Array.from(selectElement.options).forEach(option => {
+            const customOption = document.createElement('div');
+            customOption.className = 'custom-option';
+            customOption.textContent = option.textContent;
+            customOption.dataset.value = option.value;
+            if (option.selected) {
+                trigger.textContent = option.textContent;
+                customOption.classList.add('selected');
+            }
+            optionsContainer.appendChild(customOption);
+        });
+        customSelect.append(trigger, optionsContainer);
+        wrapper.appendChild(customSelect);
+        selectElement.style.display = 'none';
+        selectElement.parentNode.insertBefore(wrapper, selectElement);
+        wrapper.appendChild(selectElement);
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            customSelect.classList.toggle('open');
+        });
+        optionsContainer.addEventListener('click', e => {
+            if (e.target.classList.contains('custom-option')) {
+                trigger.textContent = e.target.textContent;
+                optionsContainer.querySelector('.selected')?.classList.remove('selected');
+                e.target.classList.add('selected');
+                selectElement.value = e.target.dataset.value;
+                selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+                customSelect.classList.remove('open');
+            }
+        });
+    }
+
+    document.addEventListener('click', () => document.querySelectorAll('.custom-select.open').forEach(s => s.classList.remove('open')));
+
+</script>
+</body>
+</html>
