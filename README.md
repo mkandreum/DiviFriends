@@ -8,7 +8,7 @@
 
 ![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?style=flat&logo=kotlin&logoColor=white)
 ![Android](https://img.shields.io/badge/Android-3DDC84?style=flat&logo=android&logoColor=white)
-![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white)
+![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-4285F4?style=flat&logo=jetpackcompose&logoColor=white)
 
 </div>
 
@@ -34,12 +34,14 @@ DiviFriends es una app Android para repartir gastos de grupo: viajes, cenas, pis
 
 | Capa | Tecnología |
 |------|----------|
-| Interfaz | HTML + CSS + JavaScript (`app/src/main/assets/index.html`) en WebView |
-| Nativo | Kotlin · `AndroidBridge` (JavascriptInterface) para archivos y NFC |
-| NFC | `HostApduService` (AID `F0010203040506`) + `ReaderMode` con mensajes NDEF |
-| Datos | `localStorage` del WebView (sin servidor) |
+| Interfaz | Kotlin + Jetpack Compose (Material 3) con tema glass/neón |
+| Navegación | Navigation Compose (single-Activity) |
+| Estado | `ViewModel` + `StateFlow` + `AppRepository` |
+| Datos | JSON en almacenamiento interno (sin servidor, 100 % offline) |
+| Gráficos | Canvas nativo (sin dependencias de CDN) |
+| NFC | `HostApduService` (AID `F0010203040506`) + `ReaderMode` con APDU/Ndef |
 
-Requiere un dispositivo con NFC HCE. minSdk 27, targetSdk 36, Java 11.
+Requiere un dispositivo con NFC HCE. minSdk 27, targetSdk 36, Java 17.
 
 ## 🚀 Compilar
 

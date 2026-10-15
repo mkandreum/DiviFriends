@@ -4,15 +4,17 @@ import android.nfc.NdefMessage
 import android.nfc.NdefRecord
 import android.nfc.cardemulation.HostApduService
 import android.os.Bundle
-import java.nio.charset.Charset
-import java.util.*
+import java.util.Locale
 
 class HostCardEmulatorService : HostApduService() {
 
     companion object {
+        @Volatile
         var groupData: String? = null
-        private val AID = "F0010203040506"
-        private val SELECT_APDU_HEADER = "00A40400"
+
+        private const val AID = "F0010203040506"
+        private const val SELECT_APDU_HEADER = "00A40400"
+
         private val SELECT_OK_SW = hexStringToByteArray("9000")
         private val UNKNOWN_CMD_SW = hexStringToByteArray("0000")
 
@@ -43,36 +45,25 @@ class HostCardEmulatorService : HostApduService() {
     }
 
     override fun processCommandApdu(commandApdu: ByteArray, extras: Bundle?): ByteArray {
+        // APDUs can come from any reader in range, so never assume their length.
+        if (commandApdu.size < 5) return UNKNOWN_CMD_SW
         val command = byteArrayToHexString(commandApdu)
+        if (command.length < 10 + AID.length) return UNKNOWN_CMD_SW
+        if (!command.startsWith(SELECT_APDU_HEADER)) return UNKNOWN_CMD_SW
 
-        if (command.substring(0, SELECT_APDU_HEADER.length) == SELECT_APDU_HEADER) {
-            val aid = command.substring(10, 10 + AID.length)
-            if (aid.uppercase(Locale.ROOT) == AID) {
-                val data = groupData
-                if (data != null) {
-                    val record = NdefRecord.createTextRecord("en", data)
-                    val ndefMessage = NdefMessage(arrayOf(record))
-                    val ndefBytes = ndefMessage.toByteArray()
+        val aid = command.substring(10, 10 + AID.length)
+        if (!aid.equals(AID, ignoreCase = true)) return UNKNOWN_CMD_SW
 
-                    // Preparamos la respuesta para el lector
-                    // [NDEF Message Length (2 bytes)] + [NDEF Message] + [OK Status (9000)]
-                    val response = ByteArray(2 + ndefBytes.size + 2)
+        val data = groupData ?: return UNKNOWN_CMD_SW
+        val record = NdefRecord.createTextRecord("en", data)
+        val ndefBytes = NdefMessage(arrayOf(record)).toByteArray()
 
-                    // NDEF Length
-                    response[0] = (ndefBytes.size / 256).toByte()
-                    response[1] = (ndefBytes.size % 256).toByte()
-
-                    // NDEF Message
-                    System.arraycopy(ndefBytes, 0, response, 2, ndefBytes.size)
-
-                    // Status Word OK
-                    response[2 + ndefBytes.size] = 0x90.toByte()
-                    response[2 + ndefBytes.size + 1] = 0x00.toByte()
-
-                    return response
-                }
-            }
-        }
-        return UNKNOWN_CMD_SW
+        // [NDEF length (2 bytes)] + [NDEF message] + [SW 90 00]
+        val response = ByteArray(2 + ndefBytes.size + 2)
+        response[0] = (ndefBytes.size / 256).toByte()
+        response[1] = (ndefBytes.size % 256).toByte()
+        System.arraycopy(ndefBytes, 0, response, 2, ndefBytes.size)
+        System.arraycopy(SELECT_OK_SW, 0, response, 2 + ndefBytes.size, SELECT_OK_SW.size)
+        return response
     }
 }
