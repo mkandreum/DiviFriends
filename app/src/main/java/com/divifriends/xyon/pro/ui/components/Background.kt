@@ -6,120 +6,104 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.sp
-import com.divifriends.xyon.pro.ui.theme.AppBackground
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import com.divifriends.xyon.pro.ui.theme.LocalDiviPalette
-import kotlin.math.roundToInt
+import kotlin.math.cos
+import kotlin.math.sin
 
-/**
- * Full screen neon backdrop: two soft radial glows (theme primary + secondary)
- * plus a slow "falling money" emoji layer, mirroring the original design without
- * any CDN dependency.
- */
+/** Root canvas: the sheet color, so overscroll and gaps never flash white/black. */
 @Composable
-fun NeonBackground(
+fun DiviBackground(
     modifier: Modifier = Modifier,
-    showMoney: Boolean = true,
     content: @Composable BoxScope.() -> Unit
 ) {
-    val palette = LocalDiviPalette.current
     Box(
         modifier = modifier
             .fillMaxSize()
-            .drawBehind {
-                drawRect(AppBackground)
-                drawRect(
-                    brush = Brush.radialGradient(
-                        colors = listOf(palette.primary.copy(alpha = 0.30f), Color.Transparent),
-                        center = Offset(size.width * 0.15f, size.height * 0.18f),
-                        radius = size.maxDimension * 0.55f
-                    )
-                )
-                drawRect(
-                    brush = Brush.radialGradient(
-                        colors = listOf(palette.secondary.copy(alpha = 0.24f), Color.Transparent),
-                        center = Offset(size.width * 0.88f, size.height * 0.85f),
-                        radius = size.maxDimension * 0.6f
-                    )
-                )
-            }
-    ) {
-        if (showMoney) MoneyRain(color = palette.primary)
-        content()
+            .background(LocalDiviPalette.current.sheet),
+        content = content
+    )
+}
+
+/**
+ * The signature green → teal gradient with two light "aurora" blobs drifting
+ * slowly and a pair of outlined hexagons, like the reference cards.
+ */
+@Composable
+fun HeroGradient(modifier: Modifier = Modifier, animated: Boolean = true) {
+    val palette = LocalDiviPalette.current
+    val transition = rememberInfiniteTransition(label = "aurora")
+    val t by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(14000, easing = LinearEasing), RepeatMode.Restart),
+        label = "auroraT"
+    )
+    val phase = if (animated) t * 2f * Math.PI.toFloat() else 0f
+
+    Canvas(modifier = modifier) {
+        drawRect(
+            brush = Brush.linearGradient(
+                colors = listOf(palette.heroStart, palette.heroEnd),
+                start = Offset(0f, 0f),
+                end = Offset(size.width * 0.9f, size.height * 1.1f)
+            )
+        )
+        val r1 = size.width * 0.75f
+        val c1 = Offset(
+            size.width * (0.85f + 0.08f * cos(phase)),
+            size.height * (0.05f + 0.08f * sin(phase))
+        )
+        drawCircle(
+            brush = Brush.radialGradient(listOf(palette.heroGlow, Color.Transparent), c1, r1),
+            radius = r1,
+            center = c1
+        )
+        val r2 = size.width * 0.6f
+        val c2 = Offset(
+            size.width * (0.1f + 0.1f * sin(phase * 0.8f)),
+            size.height * (0.9f + 0.06f * cos(phase))
+        )
+        drawCircle(
+            brush = Brush.radialGradient(listOf(palette.heroGlow.copy(alpha = palette.heroGlow.alpha * 0.7f), Color.Transparent), c2, r2),
+            radius = r2,
+            center = c2
+        )
+        hexOutline(
+            center = Offset(size.width * 0.92f, size.height * 0.62f),
+            radius = size.width * 0.16f,
+            rotation = phase * 4f,
+            color = Color.White.copy(alpha = 0.07f)
+        )
+        hexOutline(
+            center = Offset(size.width * 0.04f, size.height * 0.18f),
+            radius = size.width * 0.1f,
+            rotation = -phase * 4f,
+            color = Color.White.copy(alpha = 0.06f)
+        )
     }
 }
 
-private data class MoneyFlake(
-    val x: Float,
-    val startDelay: Float,
-    val speed: Float,
-    val sizeSp: Float,
-    val glyph: String
-)
-
-@Composable
-private fun MoneyRain(color: Color, modifier: Modifier = Modifier) {
-    val flakes = remember {
-        val glyphs = listOf("\uD83D\uDCB8", "\uD83D\uDCB6", "\uD83D\uDCB0")
-        List(15) {
-            MoneyFlake(
-                x = Math.random().toFloat(),
-                startDelay = Math.random().toFloat(),
-                speed = 0.6f + Math.random().toFloat() * 0.8f,
-                sizeSp = 14f + Math.random().toFloat() * 20f,
-                glyph = glyphs.random()
-            )
-        }
+internal fun DrawScope.hexOutline(center: Offset, radius: Float, rotation: Float, color: Color, strokeWidth: Float = 3f) {
+    val path = Path()
+    for (i in 0 until 6) {
+        val a = Math.toRadians(60.0 * i - 90.0 + rotation)
+        val p = Offset(center.x + radius * cos(a).toFloat(), center.y + radius * sin(a).toFloat())
+        if (i == 0) path.moveTo(p.x, p.y) else path.lineTo(p.x, p.y)
     }
-    var boxSize by remember { mutableStateOf(IntSize.Zero) }
-    val transition = rememberInfiniteTransition(label = "money")
-    // State is read inside the layout lambda below, so the animation only
-    // re-runs layout each frame instead of recomposing the whole layer.
-    val progress = transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 26_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "moneyProgress"
-    )
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .onSizeChanged { boxSize = it }
-    ) {
-        if (boxSize.height == 0) return@Box
-        flakes.forEach { flake ->
-            Text(
-                text = flake.glyph,
-                color = color.copy(alpha = 0.18f),
-                fontSize = flake.sizeSp.sp,
-                modifier = Modifier.offset {
-                    val fraction = (progress.value * flake.speed + flake.startDelay) % 1f
-                    val y = (fraction * (boxSize.height + 200f)) - 100f
-                    val x = flake.x * boxSize.width
-                    IntOffset(x.roundToInt(), y.roundToInt())
-                }
-            )
-        }
-    }
+    path.close()
+    drawPath(path, color, style = Stroke(width = strokeWidth))
 }

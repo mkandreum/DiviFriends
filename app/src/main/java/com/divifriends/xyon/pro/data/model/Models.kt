@@ -16,7 +16,14 @@ data class AppData(
 @Serializable
 data class AppConfig(
     val userName: String = "",
-    val theme: String = THEME_TEAL
+    /** Legacy field kept only so old backups keep restoring. No longer used. */
+    val theme: String = "",
+    /** Appearance: false = claro (por defecto), true = oscuro. */
+    val darkMode: Boolean = false,
+    /** Whether the welcome flow has been completed or skipped. */
+    val onboarded: Boolean = false,
+    /** Haptic feedback (vibration) on taps, swipes and confirmations. */
+    val haptics: Boolean = true
 )
 
 @Serializable
@@ -51,13 +58,6 @@ data class Debt(
     val to: String,
     val amount: Double
 )
-
-const val THEME_TEAL = "theme-teal"
-const val THEME_ORANGE = "theme-orange"
-const val THEME_PURPLE = "theme-purple"
-const val THEME_RED = "theme-red"
-const val THEME_GREEN = "theme-green"
-const val THEME_YELLOW = "theme-yellow"
 
 const val CATEGORY_SETTLEMENT = "\uD83E\uDD1D"
 const val CATEGORY_OTHER = "\uD83D\uDCB8"

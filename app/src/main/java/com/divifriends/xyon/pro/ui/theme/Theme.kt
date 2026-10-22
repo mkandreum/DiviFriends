@@ -2,35 +2,71 @@ package com.divifriends.xyon.pro.ui.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 
 @Composable
 fun DiviTheme(
-    paletteKey: String,
+    dark: Boolean,
     content: @Composable () -> Unit
 ) {
-    val palette = paletteFor(paletteKey)
-    val scheme = darkColorScheme(
-        primary = palette.primary,
-        onPrimary = Color(0xFF111111),
-        secondary = palette.secondary,
-        onSecondary = Color(0xFF111111),
-        tertiary = palette.accent,
-        onTertiary = Color(0xFF111111),
-        error = palette.danger,
-        onError = Color(0xFF111111),
-        background = AppBackground,
-        onBackground = TextPrimary,
-        surface = Color(0xFF15151F),
-        onSurface = TextPrimary,
-        surfaceVariant = GlassFill,
-        onSurfaceVariant = TextSecondary,
-        outline = palette.border
-    )
+    val p = diviPalette(dark)
 
-    CompositionLocalProvider(LocalDiviPalette provides palette) {
+    val scheme = if (dark) {
+        darkColorScheme(
+            primary = p.accent,
+            onPrimary = p.onAccent,
+            primaryContainer = p.accentSoft,
+            onPrimaryContainer = p.accent,
+            secondary = p.sun,
+            onSecondary = p.onSun,
+            tertiary = p.accentDeep,
+            onTertiary = p.onAccent,
+            error = p.negative,
+            onError = Color.White,
+            background = p.sheet,
+            onBackground = Color(0xFFEAF4F2),
+            surface = p.sheet,
+            onSurface = Color(0xFFEAF4F2),
+            surfaceVariant = p.raised,
+            onSurfaceVariant = Color(0xFF8FA7A3),
+            surfaceContainer = p.raised,
+            surfaceContainerHigh = p.raised,
+            surfaceContainerLow = p.sheet,
+            outline = p.hairline,
+            outlineVariant = p.hairline,
+            scrim = Color(0xCC000000)
+        )
+    } else {
+        lightColorScheme(
+            primary = p.accent,
+            onPrimary = p.onAccent,
+            primaryContainer = p.accentSoft,
+            onPrimaryContainer = p.accentDeep,
+            secondary = p.sun,
+            onSecondary = p.onSun,
+            tertiary = p.accentDeep,
+            onTertiary = p.onAccent,
+            error = p.negative,
+            onError = Color.White,
+            background = p.sheet,
+            onBackground = Color(0xFF10231F),
+            surface = p.sheet,
+            onSurface = Color(0xFF10231F),
+            surfaceVariant = p.raised,
+            onSurfaceVariant = Color(0xFF7A8C89),
+            surfaceContainer = p.raised,
+            surfaceContainerHigh = p.raised,
+            surfaceContainerLow = p.sheet,
+            outline = p.hairline,
+            outlineVariant = p.hairline,
+            scrim = Color(0x8C06201B)
+        )
+    }
+
+    CompositionLocalProvider(LocalDiviPalette provides p) {
         MaterialTheme(
             colorScheme = scheme,
             typography = DiviTypography,

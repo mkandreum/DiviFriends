@@ -52,9 +52,24 @@ class DiviViewModel(private val repository: AppRepository) : ViewModel() {
         repository.mutate { it.copy(config = it.config.copy(userName = clean)) }
     }
 
-    fun changeTheme(themeKey: String, silent: Boolean = false) {
-        repository.mutate { it.copy(config = it.config.copy(theme = themeKey)) }
-        if (!silent) toast("\uD83C\uDFA8 Tema cambiado")
+    fun completeOnboarding(name: String) {
+        val clean = name.trim()
+        repository.mutate {
+            it.copy(
+                config = it.config.copy(
+                    userName = clean.ifEmpty { it.config.userName },
+                    onboarded = true
+                )
+            )
+        }
+    }
+
+    fun setDarkMode(dark: Boolean) {
+        repository.mutate { it.copy(config = it.config.copy(darkMode = dark)) }
+    }
+
+    fun setHaptics(enabled: Boolean) {
+        repository.mutate { it.copy(config = it.config.copy(haptics = enabled)) }
     }
 
     // ---------------------------------------------------------------- groups
@@ -252,6 +267,11 @@ class DiviViewModel(private val repository: AppRepository) : ViewModel() {
             )
         }
         toast("Deuda saldada. \u00a1Bien hecho! \uD83D\uDC4D")
+        val group = repository.data.value.groups[groupId] ?: return
+        val pending = BalanceCalculator.simplifyDebts(
+            BalanceCalculator.calculateBalances(group.expenses, group.people)
+        )
+        if (pending.isEmpty()) moneyRain()
     }
 
     // ------------------------------------------------------------- invitations

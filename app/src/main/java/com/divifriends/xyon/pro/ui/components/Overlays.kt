@@ -3,187 +3,341 @@ package com.divifriends.xyon.pro.ui.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.divifriends.xyon.pro.ui.theme.GlassFillStrong
+import androidx.compose.ui.window.DialogProperties
 import com.divifriends.xyon.pro.ui.theme.LocalDiviPalette
-import com.divifriends.xyon.pro.ui.theme.TextPrimary
-import com.divifriends.xyon.pro.ui.theme.TextSecondary
-import kotlin.math.roundToInt
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.random.Random
 
+/** Centered card dialog that springs in. */
 @Composable
 fun DiviDialog(
     onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Dialog(onDismissRequest = onDismiss) {
-        GlassCard(
+    val scale = remember { Animatable(0.85f) }
+    val alpha = remember { Animatable(0f) }
+    LaunchedEffect(Unit) { scale.animateTo(1f, spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMediumLow)) }
+    LaunchedEffect(Unit) { alpha.animateTo(1f, tween(160)) }
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(max = 620.dp),
-            contentPadding = PaddingValues(24.dp)
+                .fillMaxSize()
+                .padding(horizontal = 24.dp),
+            contentAlignment = Alignment.Center
         ) {
             Column(
-                modifier = Modifier
+                modifier = modifier
+                    .widthIn(max = 460.dp)
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                    .graphicsLayer {
+                        scaleX = scale.value
+                        scaleY = scale.value
+                        this.alpha = alpha.value
+                    }
+                    .clip(DiviLargeCardShape)
+                    .background(MaterialTheme.colorScheme.surface)
+                    .heightIn(max = 600.dp)
+                    .verticalScroll(rememberScrollState())
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
                 content = content
             )
         }
     }
 }
 
+/** Confirmation dialog with a hex icon on top. */
 @Composable
 fun DiviConfirmDialog(
     title: String,
     message: String,
+    icon: ImageVector,
     confirmText: String = "Confirmar",
     cancelText: String = "Cancelar",
+    destructive: Boolean = true,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
     DiviDialog(onDismiss = onDismiss) {
-        Text(title, style = MaterialTheme.typography.titleLarge, color = TextPrimary)
-        Text(
-            message,
-            style = MaterialTheme.typography.bodyLarge,
-            color = com.divifriends.xyon.pro.ui.theme.TextSecondary,
-            modifier = Modifier.padding(top = 12.dp, bottom = 24.dp)
+        HexBadge(
+            icon = icon,
+            tone = if (destructive) Tone.Danger else Tone.Mint,
+            size = 58.dp,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
         )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            GlassButton(
-                text = cancelText,
-                onClick = onDismiss,
-                tone = ButtonTone.Danger,
-                modifier = Modifier.weight(1f)
-            )
-            GlassButton(
-                text = confirmText,
-                onClick = onConfirm,
-                tone = ButtonTone.Safe,
-                modifier = Modifier.weight(1f)
-            )
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(4.dp))
+        if (destructive) {
+            SoftButton(text = confirmText, onClick = onConfirm, tone = Tone.Danger, heavy = true)
+        } else {
+            PrimaryButton(text = confirmText, onClick = onConfirm)
         }
+        SoftButton(text = cancelText, onClick = onDismiss, tone = Tone.Plain)
     }
 }
 
+/** Bottom sheet styled for the app (rounded, sheet color, drag handle). */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DiviToastHost(message: String?, modifier: Modifier = Modifier) {
+fun DiviSheet(
+    onDismiss: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = state,
+        shape = DiviSheetShape,
+        containerColor = LocalDiviPalette.current.sheet,
+        dragHandle = { SheetHandle() }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 20.dp)
+                .navigationBarsPadding()
+                .imePadding(),
+            content = content
+        )
+    }
+}
+
+/** Toast pill that drops from the top with a springy bounce. */
+@Composable
+fun DiviToastHost(
+    message: String?,
+    modifier: Modifier = Modifier
+) {
     val palette = LocalDiviPalette.current
     AnimatedVisibility(
         visible = message != null,
-        enter = fadeIn() + scaleIn(initialScale = 0.9f),
-        exit = fadeOut() + scaleOut(targetScale = 0.9f),
+        enter = slideInVertically(spring(dampingRatio = 0.55f, stiffness = Spring.StiffnessMediumLow)) { -it * 2 } +
+            fadeIn() + scaleIn(initialScale = 0.8f),
+        exit = slideOutVertically { -it * 2 } + fadeOut(),
         modifier = modifier
     ) {
         Box(
             modifier = Modifier
-                .padding(horizontal = 24.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(GlassFillStrong)
-                .then(Modifier.glass(shape = RoundedCornerShape(16.dp), borderColor = palette.border, elevation = 8.dp))
-                .padding(horizontal = 24.dp, vertical = 14.dp)
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 8.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = message ?: "",
-                color = TextPrimary,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold
-            )
+            Row(
+                modifier = Modifier
+                    .floatingShadow(DiviPillShape, 16.dp, Color(0x40000000))
+                    .clip(DiviPillShape)
+                    .background(if (palette.isDark) palette.raised else Color(0xFF10231F))
+                    .padding(start = 8.dp, end = 18.dp, top = 8.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Box(
+                    Modifier
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .background(Brush.linearGradient(listOf(palette.heroStart, palette.heroEnd))),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Rounded.Info, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                }
+                Text(
+                    text = message.orEmpty(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White
+                )
+            }
         }
     }
 }
 
-private data class ConfettiPiece(
-    val x: Float,
-    val delay: Float,
-    val glyph: String
+/* ------------------------------------------------------------------ *
+ *  Confetti                                                          *
+ * ------------------------------------------------------------------ */
+
+private data class Particle(
+    val angle: Float,
+    val speed: Float,
+    val spin: Float,
+    val size: Float,
+    val color: Color,
+    val isHex: Boolean,
+    val drift: Float
 )
 
-/** Celebratory emoji rain shown briefly after creating a group or adding an expense. */
+/** Physics-based confetti burst (ballistic arcs + gravity), keyed by [trigger]. */
 @Composable
-fun BoxScope.MoneyConfetti(trigger: Int) {
+fun BoxScope.ConfettiBurst(trigger: Int) {
     if (trigger <= 0) return
-    val pieces = remember(trigger) {
-        val glyphs = listOf("\uD83D\uDCB5", "\uD83D\uDCB8", "\uD83D\uDCB0", "\uD83E\uDE99")
-        List(30) {
-            ConfettiPiece(
-                x = Math.random().toFloat(),
-                delay = Math.random().toFloat(),
-                glyph = glyphs.random()
+    key(trigger) { Burst() }
+}
+
+@Composable
+private fun BoxScope.Burst() {
+    val palette = LocalDiviPalette.current
+    val progress = remember { Animatable(0f) }
+    LaunchedEffect(Unit) { progress.animateTo(1f, tween(2200, easing = LinearEasing)) }
+    val colors = listOf(palette.sun, palette.accent, palette.heroStart, Color(0xFF38B6E8), Color.White, Color(0xFF9B8AFB))
+    val particles = remember {
+        val rnd = Random(System.nanoTime())
+        List(90) {
+            Particle(
+                angle = (-90f + (rnd.nextFloat() - 0.5f) * 110f),
+                speed = 0.9f + rnd.nextFloat() * 1.1f,
+                spin = (rnd.nextFloat() - 0.5f) * 1440f,
+                size = 6f + rnd.nextFloat() * 9f,
+                color = colors[rnd.nextInt(colors.size)],
+                isHex = rnd.nextFloat() < 0.35f,
+                drift = (rnd.nextFloat() - 0.5f) * 0.6f
             )
         }
     }
-    val progress = remember(trigger) { Animatable(0f) }
-    LaunchedEffect(trigger) {
-        progress.snapTo(0f)
-        progress.animateTo(1f, tween(durationMillis = 1900, easing = LinearEasing))
-    }
-    var boxSize by remember { mutableStateOf(IntSize.Zero) }
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .onSizeChanged { boxSize = it }
-    ) {
-        if (boxSize.height == 0) return@Box
-        val p = progress.value
-        pieces.forEach { piece ->
-            val local = ((p - piece.delay * 0.3f) / 0.9f).coerceIn(0f, 1f)
-            if (local <= 0f) return@forEach
-            val alpha = (1f - local * local).coerceIn(0f, 1f)
-            Text(
-                text = piece.glyph,
-                fontSize = 26.sp,
-                color = Color.White.copy(alpha = alpha),
-                modifier = Modifier.offset {
-                    IntOffset(
-                        x = (piece.x * boxSize.width).roundToInt(),
-                        y = (local * (boxSize.height + 80) - 40).roundToInt()
+    Canvas(Modifier.matchParentSize()) {
+        val t = progress.value
+        val origin = Offset(size.width / 2f, size.height * 0.42f)
+        val v0 = size.height * 1.15f
+        val g = size.height * 2.4f
+        particles.forEach { p ->
+            val rad = Math.toRadians(p.angle.toDouble())
+            val vx = (cos(rad) * v0 * p.speed).toFloat() * 0.55f
+            val vy = (sin(rad) * v0 * p.speed).toFloat()
+            val x = origin.x + vx * t + p.drift * size.width * t * t
+            val y = origin.y + vy * t + 0.5f * g * t * t
+            val alpha = (1f - ((t - 0.65f) / 0.35f)).coerceIn(0f, 1f)
+            val s = p.size.dp.toPx() * 0.6f
+            rotate(p.spin * t, Offset(x, y)) {
+                if (p.isHex) {
+                    hexOutline(Offset(x, y), s * 0.7f, 0f, p.color.copy(alpha = alpha), strokeWidth = s * 0.45f)
+                } else {
+                    drawRect(
+                        color = p.color.copy(alpha = alpha),
+                        topLeft = Offset(x - s / 2f, y - s / 4f),
+                        size = Size(s, s / 2f)
                     )
                 }
-            )
+            }
+        }
+    }
+}
+
+/* ------------------------------------------------------------------ *
+ *  NFC radar                                                         *
+ * ------------------------------------------------------------------ */
+
+/** Expanding concentric rings around an icon: "searching / broadcasting". */
+@Composable
+fun PulseRings(
+    icon: ImageVector,
+    modifier: Modifier = Modifier,
+    size: Dp = 180.dp
+) {
+    val palette = LocalDiviPalette.current
+    val transition = rememberInfiniteTransition(label = "pulse")
+    val t by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(2200, easing = LinearEasing), RepeatMode.Restart),
+        label = "pulseT"
+    )
+    Box(modifier = modifier.size(size), contentAlignment = Alignment.Center) {
+        Canvas(Modifier.size(size)) {
+            repeat(3) { i ->
+                val local = (t + i / 3f) % 1f
+                drawCircle(
+                    color = palette.accent.copy(alpha = (1f - local) * 0.35f),
+                    radius = this.size.minDimension / 2f * (0.35f + 0.65f * local)
+                )
+            }
+        }
+        Box(
+            Modifier
+                .size(size * 0.38f)
+                .clip(Hexagon)
+                .background(Brush.linearGradient(listOf(palette.heroStart, palette.heroEnd))),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, null, tint = Color.White, modifier = Modifier.size(size * 0.17f))
         }
     }
 }
