@@ -115,9 +115,9 @@ fun HomeScreen(
                 groups.forEachIndexed { index, group ->
                     val balance = group.balanceFor(user)
                     val tone = when {
-                        balance < -0.005 -> Tone.Sun
-                        balance > 0.005 -> Tone.Plain
-                        else -> Tone.Mint
+                        balance < -0.005 -> Tone.Ink
+                        balance > 0.005 -> Tone.Sun
+                        else -> Tone.Plain
                     }
                     val last = group.expenses.maxByOrNull { it.date }
                     GroupCard(
@@ -231,7 +231,7 @@ fun HomeScreen(
                     label = "Invitar",
                     caption = "Comparte un grupo por NFC",
                     icon = Icons.Rounded.Nfc,
-                    tone = Tone.Aqua,
+                    tone = Tone.Blush,
                     onClick = onNfcInvite,
                     modifier = Modifier.weight(1f)
                 )
@@ -239,7 +239,7 @@ fun HomeScreen(
                     label = "Unirme",
                     caption = "Acerca los móviles",
                     icon = Icons.Rounded.Contactless,
-                    tone = Tone.Mint,
+                    tone = Tone.Ink,
                     onClick = onNfcScan,
                     phase = 0.5f,
                     modifier = Modifier.weight(1f)

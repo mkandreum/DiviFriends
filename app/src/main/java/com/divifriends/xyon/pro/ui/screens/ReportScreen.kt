@@ -141,8 +141,8 @@ fun ReportScreen(appData: AppData) {
             }
             Spacer(Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.staggeredAppear(0)) {
-                MetricTile("Te deben", owedToUser, Tone.Mint, Modifier.weight(1f))
-                MetricTile("Media diaria", dailyAverage, Tone.Aqua, Modifier.weight(1f))
+                MetricTile("Te deben", owedToUser, Tone.Lime, Modifier.weight(1f))
+                MetricTile("Media diaria", dailyAverage, Tone.Ink, Modifier.weight(1f))
             }
 
             SectionHeader("Por categoría")

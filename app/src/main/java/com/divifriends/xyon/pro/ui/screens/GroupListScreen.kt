@@ -37,7 +37,7 @@ import com.divifriends.xyon.pro.ui.components.Tone
 import com.divifriends.xyon.pro.ui.formatCurrency
 import com.divifriends.xyon.pro.ui.motion.staggeredAppear
 import com.divifriends.xyon.pro.ui.theme.LocalDiviPalette
-import com.divifriends.xyon.pro.ui.theme.Tabular
+import com.divifriends.xyon.pro.ui.theme.mono
 
 @Composable
 fun GroupListScreen(
@@ -122,7 +122,7 @@ fun GroupListScreen(
                                 }
                                 Text(
                                     text = formatCurrency(group.totalSpent()),
-                                    style = MaterialTheme.typography.titleSmall.merge(Tabular),
+                                    style = MaterialTheme.typography.titleSmall.mono(),
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
@@ -159,7 +159,7 @@ fun GroupListScreen(
                     label = "Invitar",
                     caption = "Envía un grupo",
                     icon = Icons.Rounded.Nfc,
-                    tone = Tone.Mint,
+                    tone = Tone.Lime,
                     onClick = onNfcSend,
                     modifier = Modifier.weight(1f)
                 )
@@ -167,7 +167,7 @@ fun GroupListScreen(
                     label = "Unirme",
                     caption = "Recibe un grupo",
                     icon = Icons.Rounded.Contactless,
-                    tone = Tone.Aqua,
+                    tone = Tone.Blush,
                     onClick = onNfcReceive,
                     phase = 0.5f,
                     modifier = Modifier.weight(1f)

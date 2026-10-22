@@ -1,11 +1,11 @@
 package com.divifriends.xyon.pro.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,7 +21,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Person
@@ -39,37 +41,45 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import com.divifriends.xyon.pro.ui.components.Cookie
 import com.divifriends.xyon.pro.ui.components.DiviPillShape
 import com.divifriends.xyon.pro.ui.components.DiviTextField
-import com.divifriends.xyon.pro.ui.components.Hexagon
 import com.divifriends.xyon.pro.ui.components.HeroGradient
+import com.divifriends.xyon.pro.ui.components.Hexagon
+import com.divifriends.xyon.pro.ui.components.clickableNoRipple
 import com.divifriends.xyon.pro.ui.haptics.LocalHaptics
+import com.divifriends.xyon.pro.ui.motion.EmphasizedDecelerate
 import com.divifriends.xyon.pro.ui.motion.bounceClick
 import com.divifriends.xyon.pro.ui.motion.breathing
 import com.divifriends.xyon.pro.ui.motion.floating
 import com.divifriends.xyon.pro.ui.motion.shakeOnError
 import com.divifriends.xyon.pro.ui.motion.shimmer
+import com.divifriends.xyon.pro.ui.theme.InstrumentSerif
 import com.divifriends.xyon.pro.ui.theme.LocalDiviPalette
+import com.divifriends.xyon.pro.ui.theme.WordmarkStyle
 import kotlinx.coroutines.delay
 
+/**
+ * Full-screen welcome. Brand first (big DIVI/FRIENDS wordmark at the top),
+ * then the pitch and the name field, all top-aligned so nothing sinks to
+ * the bottom of the screen.
+ */
 @Composable
-fun OnboardingDialog(onConfirm: (String) -> Unit) {
+fun OnboardingScreen(onConfirm: (String) -> Unit) {
     val palette = LocalDiviPalette.current
     val haptics = LocalHaptics.current
     var name by remember { mutableStateOf("") }
     var shake by remember { mutableIntStateOf(0) }
-    var revealed by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        delay(150)
-        revealed = true
-    }
+
+    // Swallow back so the app isn't left half-configured.
+    BackHandler { }
 
     fun submit() {
         if (name.isBlank()) {
@@ -81,151 +91,189 @@ fun OnboardingDialog(onConfirm: (String) -> Unit) {
         }
     }
 
-    Dialog(
-        onDismissRequest = { },
-        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+    Box(
+        Modifier
+            .fillMaxSize()
+            .clickableNoRipple { }
     ) {
-        Box(Modifier.fillMaxSize()) {
-            HeroGradient(Modifier.fillMaxSize())
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .statusBarsPadding()
-                    .navigationBarsPadding()
-                    .imePadding()
-                    .padding(horizontal = 26.dp)
-                    .padding(top = 24.dp, bottom = 48.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Illustration()
+        HeroGradient(Modifier.fillMaxSize())
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 26.dp)
+                .padding(top = 18.dp, bottom = 28.dp)
+        ) {
+            Reveal(delayMillis = 0) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        Modifier
+                            .size(30.dp)
+                            .clip(Cookie)
+                            .background(palette.sun),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("🤝", fontSize = 15.sp)
+                    }
+                    Text(
+                        text = "  XYON PLATFORMS · v2.0",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = palette.onHeroMuted
+                    )
                 }
-
-                AnimatedVisibility(
-                    visible = revealed,
-                    enter = slideInVertically(spring(dampingRatio = 0.75f, stiffness = Spring.StiffnessLow)) { it / 2 } + fadeIn()
-                ) {
-                    Column {
-                        Text(
-                            text = "Divide gastos\nsin dramas",
-                            style = MaterialTheme.typography.displayLarge,
-                            color = palette.onHero
-                        )
-                        Spacer(Modifier.height(12.dp))
-                        Text(
-                            text = "Apunta quién paga qué y DiviFriends calcula el mínimo de pagos para quedar en paz.",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = palette.onHeroMuted
-                        )
-                        Spacer(Modifier.height(26.dp))
-                        DiviTextField(
-                            value = name,
-                            onValueChange = { name = it },
-                            placeholder = "¿Cómo te llamas?",
-                            leadingIcon = Icons.Rounded.Person,
-                            imeAction = ImeAction.Go,
-                            onImeAction = ::submit,
-                            onHero = true,
-                            modifier = Modifier.shakeOnError(shake)
-                        )
-                        Spacer(Modifier.height(22.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+            }
+            Spacer(Modifier.height(18.dp))
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
+                Reveal(delayMillis = 120) {
+                    Text("DIVI", style = WordmarkStyle.copy(fontSize = 68.sp, lineHeight = 64.sp), color = palette.onHero)
+                }
+                Spacer(Modifier.weight(1f))
+                Illustration(Modifier.offset(x = 6.dp))
+            }
+            Reveal(delayMillis = 240) {
+                Text("FRIENDS", style = WordmarkStyle.copy(fontSize = 68.sp, lineHeight = 64.sp), color = palette.sun, maxLines = 1)
+            }
+            Spacer(Modifier.height(22.dp))
+            Reveal(delayMillis = 380) {
+                Column {
+                    Text(
+                        text = "Divide gastos\nsin dramas.",
+                        style = MaterialTheme.typography.displayMedium.copy(fontStyle = FontStyle.Italic, fontFamily = InstrumentSerif),
+                        color = palette.onHero
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        text = "Apunta quién paga qué y calculamos el mínimo de pagos para quedar en paz. Sin cuentas, sin servidores.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = palette.onHeroMuted
+                    )
+                }
+            }
+            Spacer(Modifier.height(26.dp))
+            Reveal(delayMillis = 500) {
+                Column {
+                    Text(
+                        text = "¿CÓMO TE LLAMAS?",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = palette.sun,
+                        modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+                    )
+                    DiviTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        placeholder = "Tu nombre",
+                        leadingIcon = Icons.Rounded.Person,
+                        imeAction = ImeAction.Go,
+                        onImeAction = ::submit,
+                        onHero = true,
+                        modifier = Modifier.shakeOnError(shake)
+                    )
+                    Spacer(Modifier.height(20.dp))
+                    val ready = name.isNotBlank()
+                    val alpha by animateFloatAsState(if (ready) 1f else 0.7f, label = "ctaAlpha")
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .then(if (ready) Modifier.breathing(0.985f, 1.015f) else Modifier)
+                            .bounceClick(pressedScale = 0.95f, feedback = { }, onClick = ::submit)
+                            .alpha(alpha)
+                            .clip(DiviPillShape)
+                            .background(palette.sun)
+                            .then(if (ready) Modifier.shimmer(Color(0x66FFFFFF)) else Modifier)
+                            .padding(start = 26.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("EMPEZAR", style = MaterialTheme.typography.titleLarge, color = palette.onSun)
+                        Box(
+                            Modifier
+                                .size(46.dp)
+                                .clip(CircleShape)
+                                .background(palette.onSun),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = "Omitir",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = palette.onHeroMuted,
-                                modifier = Modifier
-                                    .bounceClick(feedback = { it.selection() }) { onConfirm("") }
-                                    .padding(horizontal = 12.dp, vertical = 12.dp)
-                            )
-                            val ready = name.isNotBlank()
-                            val alpha by animateFloatAsState(if (ready) 1f else 0.6f, label = "ctaAlpha")
-                            Row(
-                                modifier = Modifier
-                                    .then(if (ready) Modifier.breathing(0.98f, 1.03f) else Modifier)
-                                    .bounceClick(pressedScale = 0.92f, feedback = { }, onClick = ::submit)
-                                    .alpha(alpha)
-                                    .clip(DiviPillShape)
-                                    .background(Color.White)
-                                    .then(if (ready) Modifier.shimmer(Color(0x3317A589)) else Modifier)
-                                    .padding(start = 24.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(14.dp)
-                            ) {
-                                Text("Empezar", style = MaterialTheme.typography.labelLarge, color = palette.accentDeep)
-                                Box(
-                                    Modifier
-                                        .size(44.dp)
-                                        .clip(CircleShape)
-                                        .background(Brush.linearGradient(listOf(palette.heroStart, palette.heroEnd))),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = Color.White, modifier = Modifier.size(22.dp))
-                                }
-                            }
+                            Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = palette.sun, modifier = Modifier.size(22.dp))
                         }
                     }
+                    Text(
+                        text = "Omitir por ahora",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = palette.onHeroMuted,
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(top = 10.dp)
+                            .bounceClick(feedback = { it.selection() }) { onConfirm("") }
+                            .padding(horizontal = 16.dp, vertical = 10.dp)
+                    )
                 }
             }
         }
     }
 }
 
-/** Floating cluster of hexagons and money emoji. */
+/** Masked slide-up reveal for each block. */
 @Composable
-private fun Illustration() {
+private fun Reveal(delayMillis: Int, content: @Composable () -> Unit) {
+    val progress = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        delay(delayMillis.toLong())
+        progress.animateTo(1f, tween(700, easing = EmphasizedDecelerate))
+    }
+    Box(Modifier.clipToBounds()) {
+        Box(
+            Modifier.graphicsLayer {
+                translationY = (1f - progress.value) * size.height
+                alpha = progress.value
+            }
+        ) { content() }
+    }
+}
+
+/** Small floating cluster of shapes next to the wordmark. */
+@Composable
+private fun Illustration(modifier: Modifier = Modifier) {
     val palette = LocalDiviPalette.current
-    Box(Modifier.size(260.dp), contentAlignment = Alignment.Center) {
+    val pop = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        delay(450)
+        pop.animateTo(1f, spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessLow))
+    }
+    Box(
+        modifier
+            .size(104.dp)
+            .graphicsLayer {
+                scaleX = pop.value
+                scaleY = pop.value
+            }
+    ) {
         Box(
             Modifier
-                .offset(x = (-70).dp, y = (-60).dp)
-                .floating(amplitudeDp = 8f, periodMillis = 3600, phase = 0.1f)
-                .size(70.dp)
-                .clip(Hexagon)
+                .align(Alignment.Center)
+                .floating(amplitudeDp = 6f, periodMillis = 4200)
+                .size(74.dp)
+                .clip(Cookie)
                 .background(palette.sun),
             contentAlignment = Alignment.Center
-        ) { Text("💸", fontSize = 30.sp) }
+        ) { Text("💸", fontSize = 38.sp) }
         Box(
             Modifier
-                .offset(x = 80.dp, y = (-30).dp)
-                .floating(amplitudeDp = 7f, periodMillis = 4200, phase = 0.6f)
-                .size(56.dp)
-                .clip(Hexagon)
-                .background(Color.White.copy(alpha = 0.22f)),
-            contentAlignment = Alignment.Center
-        ) { Text("🍕", fontSize = 24.sp) }
-        Box(
-            Modifier
-                .offset(x = 60.dp, y = 80.dp)
-                .floating(amplitudeDp = 6f, periodMillis = 3000, phase = 0.3f)
-                .size(48.dp)
-                .clip(Hexagon)
-                .background(palette.aqua),
-            contentAlignment = Alignment.Center
-        ) { Text("✈️", fontSize = 20.sp) }
-        Box(
-            Modifier
-                .floating(amplitudeDp = 10f, periodMillis = 4800)
-                .size(130.dp)
-                .clip(Hexagon)
-                .background(Color.White),
-            contentAlignment = Alignment.Center
-        ) { Text("🤝", fontSize = 58.sp) }
-        Box(
-            Modifier
-                .offset(x = (-80).dp, y = 70.dp)
-                .floating(amplitudeDp = 5f, periodMillis = 3300, phase = 0.8f)
+                .align(Alignment.TopStart)
+                .floating(amplitudeDp = 5f, periodMillis = 3300, phase = 0.4f)
                 .size(34.dp)
                 .clip(Hexagon)
-                .background(Color.White.copy(alpha = 0.3f))
+                .background(Color.White.copy(alpha = 0.9f)),
+            contentAlignment = Alignment.Center
+        ) { Text("🍕", fontSize = 16.sp) }
+        Box(
+            Modifier
+                .align(Alignment.BottomStart)
+                .floating(amplitudeDp = 4f, periodMillis = 3800, phase = 0.7f)
+                .size(22.dp)
+                .clip(CircleShape)
+                .background(palette.onSun)
         )
     }
 }

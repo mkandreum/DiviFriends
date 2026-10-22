@@ -65,7 +65,8 @@ fun SettingsScreen(
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Avatar(
                     name = userName.ifBlank { "?" },
-                    size = 92.dp,
+                    size = 96.dp,
+                    shape = com.divifriends.xyon.pro.ui.components.Cookie,
                     modifier = Modifier
                         .floating(amplitudeDp = 5f)
                         .staggeredAppear(0)
@@ -88,7 +89,7 @@ fun SettingsScreen(
                     icon = Icons.Rounded.DarkMode,
                     label = "Modo oscuro",
                     caption = if (darkMode) "Activado" else "Desactivado",
-                    tone = Tone.Aqua,
+                    tone = Tone.Blush,
                     onClick = { onDarkModeChange(!darkMode) },
                     trailing = { DiviSwitch(checked = darkMode, onCheckedChange = onDarkModeChange) }
                 )
@@ -97,7 +98,7 @@ fun SettingsScreen(
                     icon = Icons.Rounded.Vibration,
                     label = "Vibración háptica",
                     caption = "Respuesta táctil en toques y gestos",
-                    tone = Tone.Mint,
+                    tone = Tone.Lime,
                     onClick = { onHapticsChange(!hapticsEnabled) },
                     trailing = {
                         DiviSwitch(checked = hapticsEnabled, onCheckedChange = { enabled ->
@@ -117,7 +118,7 @@ fun SettingsScreen(
                     icon = Icons.Rounded.Download,
                     label = "Guardar copia de seguridad",
                     caption = "Exporta todo a un archivo JSON",
-                    tone = Tone.Mint,
+                    tone = Tone.Lime,
                     onClick = onBackup
                 )
                 DiviDivider()
@@ -125,7 +126,7 @@ fun SettingsScreen(
                     icon = Icons.Rounded.Upload,
                     label = "Restaurar copia",
                     caption = "Importa un archivo de respaldo",
-                    tone = Tone.Aqua,
+                    tone = Tone.Blush,
                     onClick = onRestore
                 )
                 DiviDivider()
@@ -142,12 +143,12 @@ fun SettingsScreen(
             }
 
             SectionHeader("Acerca de")
-            SurfaceCard(tone = Tone.Mint, modifier = Modifier.staggeredAppear(2)) {
-                Text("DiviFriends 2.0", style = MaterialTheme.typography.titleMedium, color = palette.onMint)
+            SurfaceCard(tone = Tone.Lime, modifier = Modifier.staggeredAppear(2)) {
+                Text("DiviFriends 2.0", style = MaterialTheme.typography.titleMedium, color = palette.onLime)
                 Text(
                     text = "Reparte gastos sin cuentas ni servidores. 100 % offline, tus datos no salen del móvil.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = palette.onMint.copy(alpha = 0.8f),
+                    color = palette.onLime.copy(alpha = 0.8f),
                     modifier = Modifier.padding(top = 4.dp)
                 )
                 Spacer(Modifier.height(10.dp))

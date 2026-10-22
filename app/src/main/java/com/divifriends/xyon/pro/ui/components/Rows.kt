@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.divifriends.xyon.pro.ui.motion.bounceClick
 import com.divifriends.xyon.pro.ui.theme.LocalDiviPalette
-import com.divifriends.xyon.pro.ui.theme.Tabular
+import com.divifriends.xyon.pro.ui.theme.mono
 
 /**
  * History row (reference: "Philip Lahm · Transfer · −$300"): hex avatar or
@@ -63,7 +63,7 @@ fun TransactionRow(
             )
             Text(
                 text = subtitle,
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -72,7 +72,7 @@ fun TransactionRow(
         Column(horizontalAlignment = Alignment.End) {
             Text(
                 text = amount,
-                style = MaterialTheme.typography.titleSmall.merge(Tabular),
+                style = MaterialTheme.typography.titleSmall.mono(),
                 color = amountColor,
                 maxLines = 1
             )
@@ -126,7 +126,7 @@ fun GroupCard(
         Spacer(Modifier.height(18.dp))
         Text(
             text = amount,
-            style = MaterialTheme.typography.titleLarge.merge(Tabular),
+            style = MaterialTheme.typography.titleLarge.mono(),
             color = fg,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis

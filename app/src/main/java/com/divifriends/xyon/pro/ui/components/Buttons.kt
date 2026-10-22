@@ -132,8 +132,8 @@ fun HeroPill(
     onClick: (() -> Unit)? = null
 ) {
     val palette = LocalDiviPalette.current
-    val bg by animateColorAsState(if (solid) Color.White else palette.heroChip, label = "pillBg")
-    val fg = if (solid) palette.accentDeep else palette.onHero
+    val bg by animateColorAsState(if (solid) palette.sun else palette.heroChip, label = "pillBg")
+    val fg = if (solid) palette.onSun else palette.onHero
     Row(
         modifier = modifier
             .then(
@@ -162,7 +162,7 @@ fun ActionTile(
     icon: ImageVector,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    tone: Tone = Tone.Mint,
+    tone: Tone = Tone.Lime,
     caption: String? = null,
     phase: Float = 0f
 ) {
@@ -194,7 +194,7 @@ fun ActionTile(
 @Composable
 fun TileIllustration(icon: ImageVector, tone: Tone, phase: Float = 0f) {
     val palette = LocalDiviPalette.current
-    val main = if (tone == Tone.Aqua) palette.accentDeep else palette.accent
+    val main = if (tone == Tone.Blush) palette.accentDeep else palette.accent
     Box(modifier = Modifier.size(78.dp).floating(amplitudeDp = 4f, phase = phase)) {
         Box(
             Modifier
@@ -219,7 +219,7 @@ fun TileIllustration(icon: ImageVector, tone: Tone, phase: Float = 0f) {
                 .offset(x = (-2).dp, y = 6.dp)
                 .size(16.dp)
                 .clip(Hexagon)
-                .background(palette.aqua.copy(alpha = 0.9f))
+                .background(palette.blush.copy(alpha = 0.9f))
         )
     }
 }

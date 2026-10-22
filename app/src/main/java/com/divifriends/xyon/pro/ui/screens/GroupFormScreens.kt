@@ -145,7 +145,7 @@ fun CreateGroupScreen(
                 Avatar(
                     name = name.ifBlank { "?" },
                     size = 72.dp,
-                    highlight = false,
+                    shape = com.divifriends.xyon.pro.ui.components.Cookie,
                     modifier = Modifier.floating(amplitudeDp = 4f)
                 )
                 Spacer(Modifier.width(16.dp))
@@ -201,14 +201,14 @@ fun CreateGroupScreen(
                                 Text(
                                     text = suggestion,
                                     style = MaterialTheme.typography.labelLarge,
-                                    color = palette.onMint,
+                                    color = palette.onLime,
                                     modifier = Modifier
                                         .bounceClick(pressedScale = 0.9f, feedback = { it.toggle() }) {
                                             name = suggestion.substringAfter(' ')
                                             error = null
                                         }
                                         .clip(DiviPillShape)
-                                        .background(palette.mint)
+                                        .background(palette.lime)
                                         .padding(horizontal = 14.dp, vertical = 9.dp)
                                 )
                             }
@@ -355,7 +355,7 @@ fun EditGroupScreen(
                 SoftButton(
                     text = "Guardar nombre",
                     onClick = { onRename(nameText) },
-                    tone = Tone.Mint,
+                    tone = Tone.Lime,
                     leadingIcon = Icons.Rounded.Check,
                     modifier = Modifier.padding(top = 12.dp)
                 )

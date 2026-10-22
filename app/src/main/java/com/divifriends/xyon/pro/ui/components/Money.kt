@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.padding
 import com.divifriends.xyon.pro.ui.formatCurrency
 import com.divifriends.xyon.pro.ui.motion.animatedDouble
-import com.divifriends.xyon.pro.ui.theme.Tabular
+import com.divifriends.xyon.pro.ui.theme.mono
 import kotlin.math.abs
 
 /** "24.450,00 €" → ("24.450", ",00 €"). */
@@ -53,13 +53,13 @@ fun AnimatedAmount(
     Row(modifier = modifier, verticalAlignment = Alignment.Bottom) {
         Text(
             text = sign + main,
-            style = style.merge(Tabular),
+            style = style.mono(),
             color = color,
             maxLines = 1
         )
         Text(
             text = tail,
-            style = style.merge(Tabular).copy(
+            style = style.mono().copy(
                 fontSize = style.fontSize * 0.45f,
                 fontWeight = FontWeight.SemiBold
             ),
@@ -82,7 +82,7 @@ fun AnimatedMoneyText(
     val animated = animatedDouble(value, durationMillis = 900)
     Text(
         text = if (signed) signedCurrency(animated) else formatCurrency(animated),
-        style = style.merge(Tabular),
+        style = style.mono(),
         color = color,
         maxLines = 1,
         modifier = modifier

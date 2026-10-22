@@ -150,7 +150,7 @@ fun initialsOf(name: String): String {
 
 /** Stable pastel tone per name, so every friend keeps "their" color. */
 fun DiviPalette.avatarColors(name: String): Pair<Color, Color> {
-    val options = listOf(mint to onMint, aqua to onAqua, sunSoft to onSun, accentSoft to accentDeep)
+    val options = listOf(lime to onLime, blush to onBlush, sun to onSun, ink to onInk)
     return options[(name.hashCode() and 0x7fffffff) % options.size]
 }
 

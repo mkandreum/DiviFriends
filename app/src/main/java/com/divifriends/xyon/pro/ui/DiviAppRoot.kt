@@ -94,7 +94,7 @@ import com.divifriends.xyon.pro.ui.screens.EditGroupScreen
 import com.divifriends.xyon.pro.ui.screens.GroupDetailScreen
 import com.divifriends.xyon.pro.ui.screens.GroupListScreen
 import com.divifriends.xyon.pro.ui.screens.HomeScreen
-import com.divifriends.xyon.pro.ui.screens.OnboardingDialog
+import com.divifriends.xyon.pro.ui.screens.OnboardingScreen
 import com.divifriends.xyon.pro.ui.screens.ReportScreen
 import com.divifriends.xyon.pro.ui.screens.SettingsScreen
 import com.divifriends.xyon.pro.ui.screens.signatureEmoji
@@ -345,12 +345,16 @@ fun DiviAppRoot(viewModel: DiviViewModel) {
                     modifier = Modifier.fillMaxSize()
                 )
 
+                AnimatedVisibility(
+                    visible = !appData.config.onboarded && appData.config.userName.isBlank(),
+                    enter = fadeIn(tween(300)),
+                    exit = slideOutVertically(tween(520, easing = EmphasizedDecelerate)) { -it } + fadeOut(tween(420))
+                ) {
+                    OnboardingScreen(onConfirm = viewModel::completeOnboarding)
+                }
+
                 DiviToastHost(message = toastMessage, modifier = Modifier.align(Alignment.TopCenter))
                 ConfettiBurst(trigger = confettiKey)
-
-                if (!appData.config.onboarded && appData.config.userName.isBlank()) {
-                    OnboardingDialog(onConfirm = viewModel::completeOnboarding)
-                }
 
                 NfcDialogs(
                     state = nfcState,
@@ -639,7 +643,7 @@ private fun PrimaryActionSheet(
                         ActionTile(
                             label = "Nuevo gasto",
                             icon = Icons.AutoMirrored.Rounded.ReceiptLong,
-                            tone = Tone.Mint,
+                            tone = Tone.Lime,
                             onClick = {
                                 if (groups.size > 1) picking = true else onNewExpenseDirect()
                             },
@@ -648,7 +652,7 @@ private fun PrimaryActionSheet(
                         ActionTile(
                             label = "Nuevo grupo",
                             icon = Icons.Rounded.GroupAdd,
-                            tone = Tone.Aqua,
+                            tone = Tone.Blush,
                             phase = 0.3f,
                             onClick = onNewGroup,
                             modifier = Modifier.weight(1f)
@@ -660,7 +664,7 @@ private fun PrimaryActionSheet(
                             label = "Invitar",
                             caption = "Por NFC",
                             icon = Icons.Rounded.Nfc,
-                            tone = Tone.Aqua,
+                            tone = Tone.Blush,
                             phase = 0.6f,
                             onClick = onNfcInvite,
                             modifier = Modifier.weight(1f)
@@ -669,7 +673,7 @@ private fun PrimaryActionSheet(
                             label = "Unirme",
                             caption = "Recibir grupo",
                             icon = Icons.Rounded.Contactless,
-                            tone = Tone.Mint,
+                            tone = Tone.Lime,
                             phase = 0.9f,
                             onClick = onNfcScan,
                             modifier = Modifier.weight(1f)

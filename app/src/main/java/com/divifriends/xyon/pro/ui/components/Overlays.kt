@@ -127,7 +127,7 @@ fun DiviConfirmDialog(
     DiviDialog(onDismiss = onDismiss) {
         HexBadge(
             icon = icon,
-            tone = if (destructive) Tone.Danger else Tone.Mint,
+            tone = if (destructive) Tone.Danger else Tone.Lime,
             size = 58.dp,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
@@ -208,7 +208,7 @@ fun DiviToastHost(
                 modifier = Modifier
                     .floatingShadow(DiviPillShape, 16.dp, Color(0x40000000))
                     .clip(DiviPillShape)
-                    .background(if (palette.isDark) palette.raised else Color(0xFF10231F))
+                    .background(if (palette.isDark) palette.raised else palette.ink)
                     .padding(start = 8.dp, end = 18.dp, top = 8.dp, bottom = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -217,10 +217,10 @@ fun DiviToastHost(
                     Modifier
                         .size(28.dp)
                         .clip(CircleShape)
-                        .background(Brush.linearGradient(listOf(palette.heroStart, palette.heroEnd))),
+                        .background(palette.sun),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Rounded.Info, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Rounded.Info, null, tint = palette.onSun, modifier = Modifier.size(16.dp))
                 }
                 Text(
                     text = message.orEmpty(),
@@ -258,7 +258,7 @@ private fun BoxScope.Burst() {
     val palette = LocalDiviPalette.current
     val progress = remember { Animatable(0f) }
     LaunchedEffect(Unit) { progress.animateTo(1f, tween(2200, easing = LinearEasing)) }
-    val colors = listOf(palette.sun, palette.accent, palette.heroStart, Color(0xFF38B6E8), Color.White, Color(0xFF9B8AFB))
+    val colors = listOf(palette.sun, palette.accent, palette.heroStart, Color(0xFFFF8A65), Color.White, Color(0xFF2A1215))
     val particles = remember {
         val rnd = Random(System.nanoTime())
         List(90) {
@@ -332,8 +332,8 @@ fun PulseRings(
         }
         Box(
             Modifier
-                .size(size * 0.38f)
-                .clip(Hexagon)
+                .size(size * 0.4f)
+                .clip(Cookie)
                 .background(Brush.linearGradient(listOf(palette.heroStart, palette.heroEnd))),
             contentAlignment = Alignment.Center
         ) {

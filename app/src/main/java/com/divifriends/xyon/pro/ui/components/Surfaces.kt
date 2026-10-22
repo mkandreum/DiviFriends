@@ -72,6 +72,31 @@ class HexagonShape(private val cornerFraction: Float = 0.2f) : Shape {
 
 val Hexagon = HexagonShape()
 
+/**
+ * Scalloped "cookie" circle (Material 3 Expressive). [lobes] bumps of
+ * relative depth [depth] around the edge.
+ */
+class CookieShape(private val lobes: Int = 9, private val depth: Float = 0.08f) : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val cx = size.width / 2f
+        val cy = size.height / 2f
+        val radius = min(size.width, size.height) / 2f
+        val path = Path()
+        val steps = 180
+        for (i in 0..steps) {
+            val t = i / steps.toFloat() * 2f * Math.PI.toFloat()
+            val r = radius * (1f - depth + depth * cos(lobes * t))
+            val x = cx + r * cos(t - Math.PI.toFloat() / 2f)
+            val y = cy + r * sin(t - Math.PI.toFloat() / 2f)
+            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        }
+        path.close()
+        return Outline.Generic(path)
+    }
+}
+
+val Cookie = CookieShape()
+
 /** Soft colored shadow reserved for floating elements (navigation, CTAs). */
 fun Modifier.floatingShadow(
     shape: Shape = DiviPillShape,
@@ -86,24 +111,26 @@ fun Modifier.floatingShadow(
 )
 
 /** Tonal variants for cards and tiles. */
-enum class Tone { Plain, Raised, Mint, Aqua, Sun, Accent, Danger }
+enum class Tone { Plain, Raised, Lime, Blush, Sun, Accent, Ink, Danger }
 
 fun DiviPalette.container(tone: Tone): Color = when (tone) {
     Tone.Plain -> sheet
     Tone.Raised -> raised
-    Tone.Mint -> mint
-    Tone.Aqua -> aqua
+    Tone.Lime -> lime
+    Tone.Blush -> blush
     Tone.Sun -> sun
     Tone.Accent -> accent
+    Tone.Ink -> ink
     Tone.Danger -> negativeSoft
 }
 
 fun DiviPalette.content(tone: Tone, fallback: Color): Color = when (tone) {
     Tone.Plain, Tone.Raised -> fallback
-    Tone.Mint -> onMint
-    Tone.Aqua -> onAqua
+    Tone.Lime -> onLime
+    Tone.Blush -> onBlush
     Tone.Sun -> onSun
     Tone.Accent -> onAccent
+    Tone.Ink -> onInk
     Tone.Danger -> negative
 }
 

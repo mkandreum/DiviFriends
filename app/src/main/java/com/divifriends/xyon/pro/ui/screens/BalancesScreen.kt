@@ -59,7 +59,7 @@ import com.divifriends.xyon.pro.ui.formatCurrency
 import com.divifriends.xyon.pro.ui.motion.bounceClick
 import com.divifriends.xyon.pro.ui.motion.staggeredAppear
 import com.divifriends.xyon.pro.ui.theme.LocalDiviPalette
-import com.divifriends.xyon.pro.ui.theme.Tabular
+import com.divifriends.xyon.pro.ui.theme.mono
 
 private data class PendingDebt(val group: Group, val debt: Debt)
 
@@ -161,7 +161,7 @@ fun BalancesScreen(
                         label = "Te deben",
                         caption = formatCurrency(owed),
                         icon = Icons.AutoMirrored.Rounded.CallReceived,
-                        tone = Tone.Mint,
+                        tone = Tone.Lime,
                         onClick = { filter = if (filter == 1) 0 else 1 },
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -174,7 +174,7 @@ fun BalancesScreen(
                         label = "Debes",
                         caption = formatCurrency(owes),
                         icon = Icons.AutoMirrored.Rounded.CallMade,
-                        tone = Tone.Aqua,
+                        tone = Tone.Blush,
                         phase = 0.5f,
                         onClick = { filter = if (filter == 2) 0 else 2 },
                         modifier = Modifier.fillMaxWidth()
@@ -304,7 +304,7 @@ private fun DebtRow(
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = formatCurrency(debt.amount),
-                    style = MaterialTheme.typography.titleSmall.merge(Tabular).copy(fontWeight = FontWeight.Bold),
+                    style = MaterialTheme.typography.titleSmall.mono().copy(fontWeight = FontWeight.Bold),
                     color = if (mine) palette.negative else if (debt.to == user) palette.positive else MaterialTheme.colorScheme.onSurface
                 )
                 Row(

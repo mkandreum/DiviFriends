@@ -84,7 +84,7 @@ import com.divifriends.xyon.pro.ui.motion.bounceClick
 import com.divifriends.xyon.pro.ui.motion.shakeOnError
 import com.divifriends.xyon.pro.ui.motion.staggeredAppear
 import com.divifriends.xyon.pro.ui.theme.LocalDiviPalette
-import com.divifriends.xyon.pro.ui.theme.Tabular
+import com.divifriends.xyon.pro.ui.theme.mono
 
 @Composable
 fun GroupDetailScreen(
@@ -256,7 +256,7 @@ private fun ExpensesTab(
             emoji = "🧾",
             title = "Sin gastos",
             message = "Añade el primero y lo repartimos al céntimo.",
-            action = { SoftButton(text = "Añadir gasto", onClick = onAdd, tone = Tone.Mint, leadingIcon = Icons.Rounded.Add) }
+            action = { SoftButton(text = "Añadir gasto", onClick = onAdd, tone = Tone.Lime, leadingIcon = Icons.Rounded.Add) }
         )
         return
     }
@@ -360,7 +360,7 @@ private fun BalancesTab(
                         )
                         Text(
                             text = formatCurrency(debt.amount),
-                            style = MaterialTheme.typography.labelLarge.merge(Tabular).copy(fontWeight = FontWeight.Bold),
+                            style = MaterialTheme.typography.labelLarge.mono().copy(fontWeight = FontWeight.Bold),
                             color = when (user) {
                                 debt.from -> palette.negative
                                 debt.to -> palette.positive
@@ -511,7 +511,7 @@ fun ExpenseSheet(
                         ) {
                             Text(
                                 formatCurrency(amount),
-                                style = MaterialTheme.typography.titleMedium.merge(Tabular),
+                                style = MaterialTheme.typography.titleMedium.mono(),
                                 color = palette.accentDeep
                             )
                             Icon(Icons.Rounded.Edit, null, tint = palette.accentDeep, modifier = Modifier.size(16.dp))
@@ -565,7 +565,7 @@ fun ExpenseSheet(
                     if (participants.isNotEmpty() && amount > 0) {
                         Text(
                             text = "${formatCurrency(amount / participants.size)} por persona",
-                            style = MaterialTheme.typography.labelLarge.merge(Tabular),
+                            style = MaterialTheme.typography.labelLarge.mono(),
                             color = palette.accent,
                             modifier = Modifier.padding(top = 8.dp, start = 4.dp)
                         )

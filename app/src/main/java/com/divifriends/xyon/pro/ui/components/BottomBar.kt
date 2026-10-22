@@ -158,7 +158,8 @@ private fun PrimaryNavButton(
             .size(54.dp)
             .bounceClick(pressedScale = 0.85f, onClick = onClick)
             .floatingShadow(CircleShape, 12.dp, palette.shadow)
-            .clip(Hexagon)
+            .graphicsLayer { rotationZ = rotation / 3f }
+            .clip(Cookie)
             .background(Brush.linearGradient(listOf(palette.heroStart, palette.heroEnd))),
         contentAlignment = Alignment.Center
     ) {

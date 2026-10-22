@@ -27,11 +27,11 @@ fun DiviTheme(
             error = p.negative,
             onError = Color.White,
             background = p.sheet,
-            onBackground = Color(0xFFEAF4F2),
+            onBackground = Color(0xFFFBECEA),
             surface = p.sheet,
-            onSurface = Color(0xFFEAF4F2),
+            onSurface = Color(0xFFFBECEA),
             surfaceVariant = p.raised,
-            onSurfaceVariant = Color(0xFF8FA7A3),
+            onSurfaceVariant = Color(0xFFB39391),
             surfaceContainer = p.raised,
             surfaceContainerHigh = p.raised,
             surfaceContainerLow = p.sheet,
@@ -52,17 +52,17 @@ fun DiviTheme(
             error = p.negative,
             onError = Color.White,
             background = p.sheet,
-            onBackground = Color(0xFF10231F),
+            onBackground = Color(0xFF2A1215),
             surface = p.sheet,
-            onSurface = Color(0xFF10231F),
+            onSurface = Color(0xFF2A1215),
             surfaceVariant = p.raised,
-            onSurfaceVariant = Color(0xFF7A8C89),
+            onSurfaceVariant = Color(0xFF8C6F6E),
             surfaceContainer = p.raised,
             surfaceContainerHigh = p.raised,
             surfaceContainerLow = p.sheet,
             outline = p.hairline,
             outlineVariant = p.hairline,
-            scrim = Color(0x8C06201B)
+            scrim = Color(0x8C1E0508)
         )
     }
 

@@ -200,7 +200,7 @@ fun SectionHeader(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
-            text = title,
+            text = title.uppercase(),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground
         )
@@ -251,15 +251,15 @@ fun EmptyState(
         Box(contentAlignment = Alignment.Center, modifier = Modifier.floating()) {
             Box(
                 Modifier
-                    .size(96.dp)
-                    .clip(Hexagon)
-                    .background(palette.mint)
+                    .size(104.dp)
+                    .clip(Cookie)
+                    .background(palette.lime)
             )
             Box(
                 Modifier
                     .size(70.dp)
                     .clip(Hexagon)
-                    .background(palette.aqua),
+                    .background(palette.blush),
                 contentAlignment = Alignment.Center
             ) {
                 Text(text = emoji, style = MaterialTheme.typography.headlineMedium)
@@ -304,7 +304,7 @@ fun HexBadge(
     icon: ImageVector,
     modifier: Modifier = Modifier,
     size: Dp = 42.dp,
-    tone: Tone = Tone.Mint
+    tone: Tone = Tone.Lime
 ) {
     val palette = LocalDiviPalette.current
     Box(

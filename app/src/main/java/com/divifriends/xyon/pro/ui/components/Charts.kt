@@ -51,7 +51,7 @@ import com.divifriends.xyon.pro.ui.haptics.LocalHaptics
 import com.divifriends.xyon.pro.ui.motion.rememberRevealProgress
 import com.divifriends.xyon.pro.ui.theme.Barlow
 import com.divifriends.xyon.pro.ui.theme.LocalDiviPalette
-import com.divifriends.xyon.pro.ui.theme.Tabular
+import com.divifriends.xyon.pro.ui.theme.mono
 import kotlin.math.atan2
 import kotlin.math.floor
 import kotlin.math.hypot
@@ -67,11 +67,11 @@ fun WaveChart(
     labels: List<String>,
     modifier: Modifier = Modifier,
     initialSelected: Int = values.lastIndex,
-    lineColor: Color = Color.White,
+    lineColor: Color = LocalDiviPalette.current.sun,
     labelColor: Color = Color.White.copy(alpha = 0.7f),
     selectedLabelColor: Color = Color.White,
-    bubbleColor: Color = Color.White,
-    bubbleTextColor: Color = LocalDiviPalette.current.accentDeep,
+    bubbleColor: Color = LocalDiviPalette.current.sun,
+    bubbleTextColor: Color = LocalDiviPalette.current.onSun,
     chartHeight: Dp = 150.dp,
     valueLabel: (Double) -> String
 ) {
@@ -84,8 +84,8 @@ fun WaveChart(
     )
     val reveal = rememberRevealProgress(durationMillis = 1400, key = values)
     val measurer = rememberTextMeasurer()
-    val bubbleStyle = TextStyle(fontFamily = Barlow, fontWeight = FontWeight.Bold, fontSize = MaterialTheme.typography.labelLarge.fontSize, color = bubbleTextColor)
-        .merge(Tabular)
+    val bubbleStyle = TextStyle(fontFamily = com.divifriends.xyon.pro.ui.theme.SpaceMono, fontWeight = FontWeight.Bold, fontSize = MaterialTheme.typography.labelLarge.fontSize, color = bubbleTextColor)
+        .mono()
 
     fun select(x: Float, width: Float) {
         if (values.isEmpty()) return
@@ -194,38 +194,44 @@ fun WaveChart(
     }
 }
 
-/** Circular progress with a sun → accent sweep and centered label. */
+/** Wavy circular progress (M3 Expressive): lime squiggle over a soft track. */
 @Composable
 fun ProgressRing(
     progress: Float,
     modifier: Modifier = Modifier,
     size: Dp = 64.dp,
-    stroke: Dp = 7.dp,
-    trackColor: Color = Color.White.copy(alpha = 0.25f),
+    stroke: Dp = 6.dp,
+    trackColor: Color = Color.White.copy(alpha = 0.22f),
+    progressColor: Color = LocalDiviPalette.current.sun,
     label: String? = null,
     labelColor: Color = Color.White
 ) {
-    val palette = LocalDiviPalette.current
     val reveal = rememberRevealProgress(durationMillis = 1300, delayMillis = 250)
     val animated by animateFloatAsState(progress.coerceIn(0f, 1f), spring(stiffness = Spring.StiffnessLow), label = "ring")
     Box(modifier = modifier.size(size), contentAlignment = Alignment.Center) {
         Canvas(Modifier.size(size)) {
             val s = stroke.toPx()
-            val arc = Size(this.size.width - s, this.size.height - s)
-            val tl = Offset(s / 2, s / 2)
-            drawArc(trackColor, 0f, 360f, false, tl, arc, style = Stroke(s))
-            drawArc(
-                brush = Brush.sweepGradient(listOf(palette.sun, palette.sun, Color(0xFF8BE3A1), palette.sun)),
-                startAngle = -90f,
-                sweepAngle = 360f * animated * reveal,
-                useCenter = false,
-                topLeft = tl,
-                size = arc,
-                style = Stroke(s, cap = StrokeCap.Round)
-            )
+            val base = (this.size.minDimension - s) / 2f - s * 0.6f
+            val amp = s * 0.55f
+            val waves = 10
+            val c = Offset(this.size.width / 2f, this.size.height / 2f)
+            val path = Path()
+            val steps = 240
+            for (i in 0..steps) {
+                val t = i / steps.toFloat() * 2f * Math.PI.toFloat()
+                val r = base + amp * kotlin.math.sin(waves * t)
+                val x = c.x + r * kotlin.math.cos(t - Math.PI.toFloat() / 2f)
+                val y = c.y + r * kotlin.math.sin(t - Math.PI.toFloat() / 2f)
+                if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+            }
+            drawPath(path, trackColor, style = Stroke(s, cap = StrokeCap.Round))
+            val measure = PathMeasure().apply { setPath(path, false) }
+            val part = Path()
+            measure.getSegment(0f, measure.length * animated * reveal, part, true)
+            drawPath(part, progressColor, style = Stroke(s, cap = StrokeCap.Round))
         }
         if (label != null) {
-            Text(label, style = MaterialTheme.typography.labelLarge.merge(Tabular), color = labelColor)
+            Text(label, style = MaterialTheme.typography.labelLarge.mono(), color = labelColor)
         }
     }
 }
@@ -234,7 +240,7 @@ fun ProgressRing(
 @Composable
 fun chartColors(): List<Color> {
     val p = LocalDiviPalette.current
-    return listOf(p.accent, p.sun, Color(0xFF38B6E8), Color(0xFF9B8AFB), Color(0xFFFF8A65), p.accentDeep, Color(0xFF8BE3A1))
+    return listOf(p.accent, Color(0xFF9BD400), Color(0xFF2A1215), Color(0xFFFF8A65), Color(0xFFB57BFF), p.accentDeep, Color(0xFFFFC2C6))
 }
 
 /**
@@ -308,7 +314,7 @@ fun DonutChart(
             }
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(centerValue, style = MaterialTheme.typography.titleLarge.merge(Tabular), color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
+            Text(centerValue, style = MaterialTheme.typography.titleMedium.mono(), color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
             Text(
                 centerTitle,
                 style = MaterialTheme.typography.labelSmall,
@@ -371,7 +377,7 @@ fun BalanceBars(balances: List<Pair<String, Double>>, modifier: Modifier = Modif
                         Text(name, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                         Text(
                             format(value),
-                            style = MaterialTheme.typography.labelLarge.merge(Tabular),
+                            style = MaterialTheme.typography.labelLarge.mono(),
                             color = when {
                                 kotlin.math.abs(value) < 0.005 -> MaterialTheme.colorScheme.onSurfaceVariant
                                 positive -> palette.positive
