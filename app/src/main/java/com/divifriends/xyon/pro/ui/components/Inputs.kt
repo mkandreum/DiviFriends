@@ -64,7 +64,6 @@ import androidx.compose.ui.unit.dp
 import com.divifriends.xyon.pro.ui.haptics.LocalHaptics
 import com.divifriends.xyon.pro.ui.motion.bounceClick
 import com.divifriends.xyon.pro.ui.theme.LocalDiviPalette
-import com.divifriends.xyon.pro.ui.theme.mono
 import kotlinx.coroutines.launch
 
 @Composable
@@ -447,7 +446,7 @@ fun AmountDisplay(text: String, modifier: Modifier = Modifier, color: Color = Ma
     ) {
         Text(
             text = shown,
-            style = MaterialTheme.typography.displayLarge.mono().copy(fontSize = MaterialTheme.typography.displayLarge.fontSize * 1.15f),
+            style = MaterialTheme.typography.displayLarge.copy(fontSize = MaterialTheme.typography.displayLarge.fontSize * 1.1f),
             color = if (text.isEmpty()) color.copy(alpha = 0.35f) else color,
             maxLines = 1
         )

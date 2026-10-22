@@ -171,9 +171,9 @@ fun DiviAppRoot(viewModel: DiviViewModel) {
     SideEffect {
         activity?.let { act ->
             val controller = WindowCompat.getInsetsController(act.window, view)
-            // The gradient hero sits under the status bar: always light icons there.
+            // The app is dark-only: always light icons on both system bars.
             controller.isAppearanceLightStatusBars = false
-            controller.isAppearanceLightNavigationBars = !appData.config.darkMode
+            controller.isAppearanceLightNavigationBars = false
         }
     }
     DisposableEffect(activity) {
@@ -323,7 +323,7 @@ fun DiviAppRoot(viewModel: DiviViewModel) {
     }
 
     CompositionLocalProvider(LocalHaptics provides haptics) {
-        DiviTheme(dark = appData.config.darkMode) {
+        DiviTheme {
             DiviBackground {
                 DiviNavHost(
                     appData = appData,
@@ -571,9 +571,7 @@ private fun DiviNavHost(
                     userName = appData.config.userName,
                     groupCount = appData.groups.size,
                     expenseCount = appData.groups.values.sumOf { g -> g.expenses.count { !it.isSettlement } },
-                    darkMode = appData.config.darkMode,
                     hapticsEnabled = appData.config.haptics,
-                    onDarkModeChange = viewModel::setDarkMode,
                     onHapticsChange = viewModel::setHaptics,
                     onBack = { navController.popBackStack() },
                     onBackup = onBackup,

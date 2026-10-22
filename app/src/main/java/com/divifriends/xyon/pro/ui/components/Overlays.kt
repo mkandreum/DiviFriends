@@ -258,7 +258,7 @@ private fun BoxScope.Burst() {
     val palette = LocalDiviPalette.current
     val progress = remember { Animatable(0f) }
     LaunchedEffect(Unit) { progress.animateTo(1f, tween(2200, easing = LinearEasing)) }
-    val colors = listOf(palette.sun, palette.accent, palette.heroStart, Color(0xFFFF8A65), Color.White, Color(0xFF2A1215))
+    val colors = listOf(palette.sun, Color(0xFF8B5CF6), Color(0xFF22D3EE), palette.negative, Color.White, palette.onBlush)
     val particles = remember {
         val rnd = Random(System.nanoTime())
         List(90) {

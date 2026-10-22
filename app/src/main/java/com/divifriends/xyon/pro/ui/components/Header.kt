@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -98,7 +99,8 @@ fun HeroTopBar(
     onBack: (() -> Unit)? = null,
     actionIcon: ImageVector? = null,
     onAction: (() -> Unit)? = null,
-    actionDescription: String? = null
+    actionDescription: String? = null,
+    titleStyle: TextStyle = MaterialTheme.typography.headlineMedium
 ) {
     val palette = LocalDiviPalette.current
     Row(
@@ -126,7 +128,7 @@ fun HeroTopBar(
             }
             Text(
                 text = title,
-                style = MaterialTheme.typography.headlineMedium,
+                style = titleStyle,
                 color = palette.onHero,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis

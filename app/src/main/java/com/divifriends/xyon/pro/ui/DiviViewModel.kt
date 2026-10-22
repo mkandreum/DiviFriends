@@ -64,10 +64,6 @@ class DiviViewModel(private val repository: AppRepository) : ViewModel() {
         }
     }
 
-    fun setDarkMode(dark: Boolean) {
-        repository.mutate { it.copy(config = it.config.copy(darkMode = dark)) }
-    }
-
     fun setHaptics(enabled: Boolean) {
         repository.mutate { it.copy(config = it.config.copy(haptics = enabled)) }
     }

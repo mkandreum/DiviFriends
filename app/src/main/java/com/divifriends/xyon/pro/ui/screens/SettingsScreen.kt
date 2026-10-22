@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Favorite
@@ -44,9 +43,7 @@ fun SettingsScreen(
     userName: String,
     groupCount: Int,
     expenseCount: Int,
-    darkMode: Boolean,
     hapticsEnabled: Boolean,
-    onDarkModeChange: (Boolean) -> Unit,
     onHapticsChange: (Boolean) -> Unit,
     onBack: () -> Unit,
     onBackup: () -> Unit,
@@ -85,15 +82,6 @@ fun SettingsScreen(
         sheet = {
             SectionHeader("Preferencias")
             SurfaceCard(modifier = Modifier.staggeredAppear(0), contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 6.dp)) {
-                SettingRow(
-                    icon = Icons.Rounded.DarkMode,
-                    label = "Modo oscuro",
-                    caption = if (darkMode) "Activado" else "Desactivado",
-                    tone = Tone.Blush,
-                    onClick = { onDarkModeChange(!darkMode) },
-                    trailing = { DiviSwitch(checked = darkMode, onCheckedChange = onDarkModeChange) }
-                )
-                DiviDivider()
                 SettingRow(
                     icon = Icons.Rounded.Vibration,
                     label = "Vibración háptica",

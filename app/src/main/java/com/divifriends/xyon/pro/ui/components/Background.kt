@@ -39,8 +39,9 @@ fun DiviBackground(
 }
 
 /**
- * The signature green → teal gradient with two light "aurora" blobs drifting
- * slowly and a pair of outlined hexagons, like the reference cards.
+ * Near-black hero with three "aurora" blobs (lime, violet, cyan) flowing on
+ * slow Lissajous paths at different speeds, so the light never repeats the
+ * same shape twice in a row.
  */
 @Composable
 fun HeroGradient(modifier: Modifier = Modifier, animated: Boolean = true) {
@@ -49,7 +50,7 @@ fun HeroGradient(modifier: Modifier = Modifier, animated: Boolean = true) {
     val t by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(14000, easing = LinearEasing), RepeatMode.Restart),
+        animationSpec = infiniteRepeatable(tween(24000, easing = LinearEasing), RepeatMode.Restart),
         label = "auroraT"
     )
     val phase = if (animated) t * 2f * Math.PI.toFloat() else 0f
@@ -62,39 +63,52 @@ fun HeroGradient(modifier: Modifier = Modifier, animated: Boolean = true) {
                 end = Offset(size.width * 0.9f, size.height * 1.1f)
             )
         )
-        val r1 = size.width * 0.75f
-        val c1 = Offset(
-            size.width * (0.85f + 0.08f * cos(phase)),
-            size.height * (0.05f + 0.08f * sin(phase))
+        auroraBlob(
+            color = palette.heroGlow2,
+            center = Offset(
+                size.width * (0.82f + 0.16f * cos(phase)),
+                size.height * (0.12f + 0.14f * sin(phase * 2f))
+            ),
+            radius = size.width * (0.78f + 0.08f * sin(phase * 3f))
         )
-        drawCircle(
-            brush = Brush.radialGradient(listOf(palette.heroGlow, Color.Transparent), c1, r1),
-            radius = r1,
-            center = c1
+        auroraBlob(
+            color = palette.heroGlow3,
+            center = Offset(
+                size.width * (0.12f + 0.18f * sin(phase * 2f)),
+                size.height * (0.78f + 0.12f * cos(phase))
+            ),
+            radius = size.width * (0.66f + 0.06f * cos(phase * 2f))
         )
-        val r2 = size.width * 0.6f
-        val c2 = Offset(
-            size.width * (0.1f + 0.1f * sin(phase * 0.8f)),
-            size.height * (0.9f + 0.06f * cos(phase))
+        auroraBlob(
+            color = palette.heroGlow,
+            center = Offset(
+                size.width * (0.5f + 0.32f * sin(phase)),
+                size.height * (0.5f + 0.22f * cos(phase * 3f))
+            ),
+            radius = size.width * (0.5f + 0.06f * sin(phase * 4f))
         )
-        drawCircle(
-            brush = Brush.radialGradient(listOf(palette.heroGlow.copy(alpha = palette.heroGlow.alpha * 0.7f), Color.Transparent), c2, r2),
-            radius = r2,
-            center = c2
-        )
-        hexOutline(
-            center = Offset(size.width * 0.92f, size.height * 0.62f),
-            radius = size.width * 0.16f,
-            rotation = phase * 4f,
-            color = Color.White.copy(alpha = 0.07f)
-        )
-        hexOutline(
-            center = Offset(size.width * 0.04f, size.height * 0.18f),
-            radius = size.width * 0.1f,
-            rotation = -phase * 4f,
-            color = Color.White.copy(alpha = 0.06f)
+        // Fade the bottom into the hero base so the sheet edge stays crisp.
+        drawRect(
+            brush = Brush.verticalGradient(
+                0.6f to Color.Transparent,
+                1f to palette.heroEnd.copy(alpha = 0.7f)
+            )
         )
     }
+}
+
+private fun DrawScope.auroraBlob(color: Color, center: Offset, radius: Float) {
+    drawCircle(
+        brush = Brush.radialGradient(
+            0f to color,
+            0.45f to color.copy(alpha = color.alpha * 0.45f),
+            1f to Color.Transparent,
+            center = center,
+            radius = radius
+        ),
+        radius = radius,
+        center = center
+    )
 }
 
 internal fun DrawScope.hexOutline(center: Offset, radius: Float, rotation: Float, color: Color, strokeWidth: Float = 3f) {

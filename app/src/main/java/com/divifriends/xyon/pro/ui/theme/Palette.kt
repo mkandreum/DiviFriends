@@ -3,12 +3,13 @@ package com.divifriends.xyon.pro.ui.theme
 import androidx.compose.ui.graphics.Color
 
 /* ------------------------------------------------------------------ *
- *  Rojo · Lima design system                                          *
+ *  Noir · Aurora design system                                        *
  *                                                                     *
- *  A saturated red gradient "hero" sits on top of every screen with   *
- *  an electric lime accent; content lives on a warm sheet that slides *
- *  over it. Lime and blush tiles, plus a dark "ink" for high-contrast *
- *  blocks (Material 3 Expressive style).                              *
+ *  Dark-only. A near-black hero with lime, violet and cyan "aurora"   *
+ *  blobs flowing behind it; content lives on a pure black sheet.      *
+ *  Electric lime is the single accent (CTAs, money you're owed),      *
+ *  violet the secondary tile, and warm orange marks what you owe.    *
+ *  No red anywhere.                                                   *
  * ------------------------------------------------------------------ */
 
 data class DiviPalette(
@@ -16,14 +17,16 @@ data class DiviPalette(
     /** Gradient used by the hero area, top-left → bottom-right. */
     val heroStart: Color,
     val heroEnd: Color,
-    /** Soft blob drifting over the hero gradient (lime-tinted). */
+    /** Fluid blobs drifting over the hero (lime, violet, cyan). */
     val heroGlow: Color,
+    val heroGlow2: Color,
+    val heroGlow3: Color,
     /** Content on the hero gradient. */
     val onHero: Color,
     val onHeroMuted: Color,
     /** Translucent white chips/pills placed on the hero. */
     val heroChip: Color,
-    /** Primary brand accent (red). */
+    /** Primary brand accent (lime). */
     val accent: Color,
     val accentDeep: Color,
     val accentSoft: Color,
@@ -31,14 +34,14 @@ data class DiviPalette(
     /** Soft lime tile. */
     val lime: Color,
     val onLime: Color,
-    /** Soft red/pink tile. */
+    /** Soft violet tile (secondary tone). */
     val blush: Color,
     val onBlush: Color,
-    /** Electric lime highlight (CTAs on red, money you're owed, rings). */
+    /** Electric lime highlight (CTAs, money you're owed, rings). */
     val sun: Color,
     val sunSoft: Color,
     val onSun: Color,
-    /** Near-black block for contrast tiles and the toast. */
+    /** High-contrast block for tiles and the toast. */
     val ink: Color,
     val onInk: Color,
     /** Sheet that slides over the hero. */
@@ -57,66 +60,35 @@ data class DiviPalette(
     val shadow: Color
 )
 
-val RedLimeLight = DiviPalette(
-    isDark = false,
-    heroStart = Color(0xFFF2313C),
-    heroEnd = Color(0xFFA30F22),
-    heroGlow = Color(0x40D4FF3A),
-    onHero = Color(0xFFFFFFFF),
-    onHeroMuted = Color(0xD9FFFFFF),
-    heroChip = Color(0x2EFFFFFF),
-    accent = Color(0xFFE3202D),
-    accentDeep = Color(0xFFA8101F),
-    accentSoft = Color(0xFFFFE4E2),
-    onAccent = Color(0xFFFFFFFF),
-    lime = Color(0xFFEDFFC2),
-    onLime = Color(0xFF2E4400),
-    blush = Color(0xFFFFE4E2),
-    onBlush = Color(0xFF9A0E1E),
-    sun = Color(0xFFD4FF3A),
-    sunSoft = Color(0xFFF4FFD6),
-    onSun = Color(0xFF1C2600),
-    ink = Color(0xFF1E0B0E),
-    onInk = Color(0xFFD4FF3A),
-    sheet = Color(0xFFFFF8F6),
-    raised = Color(0xFFFBEDEA),
-    nav = Color(0xFFFFFFFF),
-    positive = Color(0xFF4A8A00),
-    negative = Color(0xFFE3202D),
-    negativeSoft = Color(0xFFFFE4E2),
-    hairline = Color(0xFFF2E1DE),
-    shadow = Color(0x40E3202D)
-)
-
-val RedLimeDark = DiviPalette(
+val NoirAurora = DiviPalette(
     isDark = true,
-    heroStart = Color(0xFFB3141F),
-    heroEnd = Color(0xFF4A0710),
-    heroGlow = Color(0x2ED4FF3A),
+    heroStart = Color(0xFF0E0E14),
+    heroEnd = Color(0xFF050507),
+    heroGlow = Color(0x66C6FF3D),
+    heroGlow2 = Color(0x738B5CF6),
+    heroGlow3 = Color(0x5522D3EE),
     onHero = Color(0xFFFFFFFF),
-    onHeroMuted = Color(0xBFFFFFFF),
-    heroChip = Color(0x24FFFFFF),
-    accent = Color(0xFFFF4D57),
-    accentDeep = Color(0xFFFF7A82),
-    accentSoft = Color(0xFF3B1418),
-    onAccent = Color(0xFF2A0005),
-    lime = Color(0xFF26300F),
-    onLime = Color(0xFFD4FF3A),
-    blush = Color(0xFF3B1418),
-    onBlush = Color(0xFFFF9AA0),
-    sun = Color(0xFFD4FF3A),
-    sunSoft = Color(0xFF2A3110),
-    onSun = Color(0xFF1C2600),
-    ink = Color(0xFFD4FF3A),
-    onInk = Color(0xFF1C2600),
-    sheet = Color(0xFF150C0E),
-    raised = Color(0xFF221416),
-    nav = Color(0xFF241517),
-    positive = Color(0xFFB8F03A),
-    negative = Color(0xFFFF5C66),
-    negativeSoft = Color(0xFF3B1418),
-    hairline = Color(0xFF33201F),
-    shadow = Color(0x80000000)
+    onHeroMuted = Color(0xA6FFFFFF),
+    heroChip = Color(0x1FFFFFFF),
+    accent = Color(0xFFC6FF3D),
+    accentDeep = Color(0xFFDDFF85),
+    accentSoft = Color(0xFF1B220C),
+    onAccent = Color(0xFF0A0F00),
+    lime = Color(0xFF1B220C),
+    onLime = Color(0xFFC6FF3D),
+    blush = Color(0xFF1D1630),
+    onBlush = Color(0xFFC4B5FF),
+    sun = Color(0xFFC6FF3D),
+    sunSoft = Color(0xFF1B220C),
+    onSun = Color(0xFF0A0F00),
+    ink = Color(0xFFF4F4F5),
+    onInk = Color(0xFF0A0A0B),
+    sheet = Color(0xFF050506),
+    raised = Color(0xFF111115),
+    nav = Color(0xFF16161B),
+    positive = Color(0xFFC6FF3D),
+    negative = Color(0xFFFF9447),
+    negativeSoft = Color(0xFF2A1708),
+    hairline = Color(0xFF1F1F26),
+    shadow = Color(0x99000000)
 )
-
-fun diviPalette(dark: Boolean): DiviPalette = if (dark) RedLimeDark else RedLimeLight

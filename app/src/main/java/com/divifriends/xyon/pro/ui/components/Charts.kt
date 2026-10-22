@@ -240,7 +240,7 @@ fun ProgressRing(
 @Composable
 fun chartColors(): List<Color> {
     val p = LocalDiviPalette.current
-    return listOf(p.accent, Color(0xFF9BD400), Color(0xFF2A1215), Color(0xFFFF8A65), Color(0xFFB57BFF), p.accentDeep, Color(0xFFFFC2C6))
+    return listOf(p.accent, Color(0xFF8B5CF6), Color(0xFF22D3EE), p.negative, p.onBlush, p.accentDeep, Color(0xFFE4E4E7))
 }
 
 /**

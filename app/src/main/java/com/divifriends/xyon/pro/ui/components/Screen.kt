@@ -195,12 +195,12 @@ fun SectionHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = 22.dp, bottom = 12.dp),
+            .padding(top = 32.dp, bottom = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
-            text = title.uppercase(),
+            text = title,
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground
         )

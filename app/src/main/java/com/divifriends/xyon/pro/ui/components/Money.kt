@@ -10,9 +10,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.padding
 import com.divifriends.xyon.pro.ui.formatCurrency
 import com.divifriends.xyon.pro.ui.motion.animatedDouble
+import com.divifriends.xyon.pro.ui.theme.Tabular
 import com.divifriends.xyon.pro.ui.theme.mono
 import kotlin.math.abs
 
@@ -53,19 +55,25 @@ fun AnimatedAmount(
     Row(modifier = modifier, verticalAlignment = Alignment.Bottom) {
         Text(
             text = sign + main,
-            style = style.mono(),
+            style = style.merge(Tabular),
             color = color,
-            maxLines = 1
+            maxLines = 1,
+            softWrap = false,
+            modifier = Modifier.alignByBaseline()
         )
         Text(
             text = tail,
-            style = style.mono().copy(
-                fontSize = style.fontSize * 0.45f,
-                fontWeight = FontWeight.SemiBold
+            style = style.merge(Tabular).copy(
+                fontSize = style.fontSize * 0.42f,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.sp
             ),
-            color = color.copy(alpha = 0.85f),
+            color = color.copy(alpha = 0.6f),
             maxLines = 1,
-            modifier = Modifier.padding(bottom = 6.dp, start = 1.dp)
+            softWrap = false,
+            modifier = Modifier
+                .alignByBaseline()
+                .padding(start = 2.dp)
         )
     }
 }

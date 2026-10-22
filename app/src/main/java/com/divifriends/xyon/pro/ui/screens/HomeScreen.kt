@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.divifriends.xyon.pro.data.model.AppData
 import com.divifriends.xyon.pro.data.model.CATEGORY_SETTLEMENT
 import com.divifriends.xyon.pro.ui.components.ActionTile
+import com.divifriends.xyon.pro.ui.components.AnimatedAmount
 import com.divifriends.xyon.pro.ui.components.EmptyState
 import com.divifriends.xyon.pro.ui.components.GroupCard
 import com.divifriends.xyon.pro.ui.components.HeroIconButton
@@ -73,6 +74,7 @@ fun HomeScreen(
     }
     val change = remember(totals) { percentChange(totals) }
     val recent = remember(appData) { appData.recentExpenses(8) }
+    val net = remember(appData) { groups.sumOf { it.balanceFor(user) } }
 
     HeroScaffold(
         compactTitle = if (user.isBlank()) "Mis cuentas" else "Hola, $user",
@@ -83,8 +85,33 @@ fun HomeScreen(
                 actionIcon = Icons.Rounded.Settings,
                 onAction = onOpenSettings,
                 actionDescription = "Ajustes",
+                titleStyle = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.staggeredAppear(0)
             )
+
+            // One huge number leads the screen: your net balance across groups.
+            Column(Modifier.staggeredAppear(1)) {
+                Text(
+                    text = when {
+                        user.isBlank() -> "Gasto total"
+                        net > 0.005 -> "Te deben"
+                        net < -0.005 -> "Debes"
+                        else -> "Estás en paz"
+                    },
+                    style = MaterialTheme.typography.labelMedium,
+                    color = palette.onHeroMuted
+                )
+                AnimatedAmount(
+                    value = if (user.isBlank()) groups.sumOf { it.totalSpent() } else kotlin.math.abs(net),
+                    color = when {
+                        user.isBlank() -> palette.onHero
+                        net > 0.005 -> palette.positive
+                        net < -0.005 -> palette.negative
+                        else -> palette.onHero
+                    }
+                )
+            }
+            Spacer(Modifier.height(22.dp))
 
             Row(
                 modifier = Modifier

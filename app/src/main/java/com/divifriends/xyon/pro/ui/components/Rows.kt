@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.divifriends.xyon.pro.ui.motion.bounceClick
 import com.divifriends.xyon.pro.ui.theme.LocalDiviPalette
+import com.divifriends.xyon.pro.ui.theme.Tabular
 import com.divifriends.xyon.pro.ui.theme.mono
 
 /**
@@ -126,7 +127,7 @@ fun GroupCard(
         Spacer(Modifier.height(18.dp))
         Text(
             text = amount,
-            style = MaterialTheme.typography.titleLarge.mono(),
+            style = MaterialTheme.typography.titleLarge.merge(Tabular),
             color = fg,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
