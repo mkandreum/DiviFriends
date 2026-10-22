@@ -1,6 +1,5 @@
 package com.divifriends.xyon.pro.ui.screens
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Contactless
@@ -30,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.divifriends.xyon.pro.data.model.AppData
 import com.divifriends.xyon.pro.data.model.CATEGORY_SETTLEMENT
 import com.divifriends.xyon.pro.ui.components.ActionTile
+import com.divifriends.xyon.pro.ui.components.CardStack
 import com.divifriends.xyon.pro.ui.components.AnimatedAmount
 import com.divifriends.xyon.pro.ui.components.EmptyState
 import com.divifriends.xyon.pro.ui.components.GroupCard
@@ -43,10 +42,12 @@ import com.divifriends.xyon.pro.ui.components.Tone
 import com.divifriends.xyon.pro.ui.components.TransactionRow
 import com.divifriends.xyon.pro.ui.components.WaveChart
 import com.divifriends.xyon.pro.ui.components.bleed
+import com.divifriends.xyon.pro.ui.components.moodOf
 import com.divifriends.xyon.pro.ui.components.signedCurrency
 import com.divifriends.xyon.pro.ui.components.todayLabel
 import com.divifriends.xyon.pro.ui.formatCurrency
 import com.divifriends.xyon.pro.ui.motion.bounceClick
+import com.divifriends.xyon.pro.ui.motion.groupSharedKey
 import com.divifriends.xyon.pro.ui.motion.staggeredAppear
 import com.divifriends.xyon.pro.ui.theme.LocalDiviPalette
 
@@ -78,6 +79,7 @@ fun HomeScreen(
 
     HeroScaffold(
         compactTitle = if (user.isBlank()) "Mis cuentas" else "Hola, $user",
+        mood = if (user.isBlank()) 0f else moodOf(net),
         hero = {
             HeroTopBar(
                 title = if (user.isBlank()) "Mis cuentas" else "Hola, $user",
@@ -113,20 +115,19 @@ fun HomeScreen(
             }
             Spacer(Modifier.height(22.dp))
 
+            // Groups as a 3D stack: fling the front card to send it to the back.
             Row(
                 modifier = Modifier
-                    .bleed(22.dp)
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 22.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .fillMaxWidth()
+                    .staggeredAppear(2),
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 HeroIconButton(
                     icon = Icons.Rounded.Add,
                     onClick = onCreateGroup,
                     size = 52.dp,
-                    contentDescription = "Nuevo grupo",
-                    modifier = Modifier.staggeredAppear(1)
+                    contentDescription = "Nuevo grupo"
                 )
                 if (groups.isEmpty()) {
                     GroupCard(
@@ -136,30 +137,36 @@ fun HomeScreen(
                         emoji = "✨",
                         tone = Tone.Sun,
                         onClick = onCreateGroup,
-                        modifier = Modifier.staggeredAppear(2)
+                        width = 220.dp
                     )
-                }
-                groups.forEachIndexed { index, group ->
-                    val balance = group.balanceFor(user)
-                    val tone = when {
-                        balance < -0.005 -> Tone.Ink
-                        balance > 0.005 -> Tone.Sun
-                        else -> Tone.Plain
+                } else {
+                    CardStack(
+                        items = groups,
+                        key = { it.id },
+                        modifier = Modifier.weight(1f)
+                    ) { group, _, width ->
+                        val balance = group.balanceFor(user)
+                        val tone = when {
+                            balance < -0.005 -> Tone.Ink
+                            balance > 0.005 -> Tone.Sun
+                            else -> Tone.Plain
+                        }
+                        val last = group.expenses.maxByOrNull { it.date }
+                        GroupCard(
+                            name = group.name,
+                            amount = when {
+                                user.isBlank() -> formatCurrency(group.totalSpent())
+                                kotlin.math.abs(balance) < 0.005 -> "En paz"
+                                else -> signedCurrency(balance)
+                            },
+                            caption = last?.shortDateLabel()?.takeIf { it.isNotEmpty() } ?: "${group.people.size} personas",
+                            emoji = group.signatureEmoji(),
+                            tone = tone,
+                            onClick = { onOpenGroup(group.id) },
+                            sharedKey = groupSharedKey(group.id),
+                            width = width
+                        )
                     }
-                    val last = group.expenses.maxByOrNull { it.date }
-                    GroupCard(
-                        name = group.name,
-                        amount = when {
-                            user.isBlank() -> formatCurrency(group.totalSpent())
-                            kotlin.math.abs(balance) < 0.005 -> "En paz"
-                            else -> signedCurrency(balance)
-                        },
-                        caption = last?.shortDateLabel()?.takeIf { it.isNotEmpty() } ?: "${group.people.size} personas",
-                        emoji = group.signatureEmoji(),
-                        tone = tone,
-                        onClick = { onOpenGroup(group.id) },
-                        modifier = Modifier.staggeredAppear(index + 2)
-                    )
                 }
             }
 

@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -42,6 +43,7 @@ import com.divifriends.xyon.pro.data.model.Group
 import com.divifriends.xyon.pro.ui.components.ActionRow
 import com.divifriends.xyon.pro.ui.components.ActionTile
 import com.divifriends.xyon.pro.ui.components.AnimatedAmount
+import com.divifriends.xyon.pro.ui.components.moodOf
 import com.divifriends.xyon.pro.ui.components.Avatar
 import com.divifriends.xyon.pro.ui.components.AvatarStack
 import com.divifriends.xyon.pro.ui.components.DiviCardShape
@@ -52,6 +54,7 @@ import com.divifriends.xyon.pro.ui.components.HeroScaffold
 import com.divifriends.xyon.pro.ui.components.HeroTopBar
 import com.divifriends.xyon.pro.ui.components.ProgressRing
 import com.divifriends.xyon.pro.ui.components.SectionHeader
+import com.divifriends.xyon.pro.ui.components.SettleOut
 import com.divifriends.xyon.pro.ui.components.SwipeAction
 import com.divifriends.xyon.pro.ui.components.SwipeRow
 import com.divifriends.xyon.pro.ui.components.Tone
@@ -97,6 +100,7 @@ fun BalancesScreen(
 
     HeroScaffold(
         compactTitle = "Saldos",
+        mood = moodOf(net),
         hero = {
             HeroTopBar(title = "Saldos", caption = "Tu balance neto", modifier = Modifier.staggeredAppear(0))
             AnimatedAmount(
@@ -230,13 +234,16 @@ fun BalancesScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     shown.forEachIndexed { index, item ->
-                        DebtRow(
-                            item = item,
-                            user = user,
-                            onOpen = { onOpenGroup(item.group.id) },
-                            onSettle = { onSettle(item.group.id, item.debt.from, item.debt.to, item.debt.amount) },
-                            modifier = Modifier.staggeredAppear(index)
-                        )
+                        // Keyed so a row's settle animation never carries over to the next one.
+                        key(item.group.id, item.debt.from, item.debt.to) {
+                            DebtRow(
+                                item = item,
+                                user = user,
+                                onOpen = { onOpenGroup(item.group.id) },
+                                onSettle = { onSettle(item.group.id, item.debt.from, item.debt.to, item.debt.amount) },
+                                modifier = Modifier.staggeredAppear(index)
+                            )
+                        }
                     }
                 }
             }
@@ -265,60 +272,61 @@ private fun DebtRow(
     val palette = LocalDiviPalette.current
     val debt = item.debt
     val mine = debt.from == user
-    SwipeRow(
-        modifier = modifier,
-        startAction = SwipeAction(
-            icon = Icons.Rounded.Handshake,
-            label = "Saldar",
-            color = palette.positive,
-            contentColor = Color.White,
-            onTrigger = onSettle
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .bounceClick(pressedScale = 0.98f, feedback = { it.selection() }, onClick = onOpen)
-                .clip(DiviCardShape)
-                .background(palette.raised)
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+    SettleOut(onSettled = onSettle, modifier = modifier) { settle ->
+        SwipeRow(
+            startAction = SwipeAction(
+                icon = Icons.Rounded.Handshake,
+                label = "Saldar",
+                color = palette.positive,
+                contentColor = palette.onAccent,
+                onTrigger = settle
+            )
         ) {
-            Avatar(name = debt.from, size = 42.dp)
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text = "${debt.from} → ${debt.to}",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = item.group.name,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1
-                )
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = formatCurrency(debt.amount),
-                    style = MaterialTheme.typography.titleSmall.mono().copy(fontWeight = FontWeight.Bold),
-                    color = if (mine) palette.negative else if (debt.to == user) palette.positive else MaterialTheme.colorScheme.onSurface
-                )
-                Row(
-                    modifier = Modifier
-                        .padding(top = 4.dp)
-                        .bounceClick(pressedScale = 0.88f, feedback = { it.success() }, onClick = onSettle)
-                        .clip(DiviPillShape)
-                        .background(palette.accentSoft)
-                        .padding(horizontal = 10.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(Icons.Rounded.Check, null, tint = palette.accentDeep, modifier = Modifier.size(14.dp))
-                    Text("Saldar", style = MaterialTheme.typography.labelSmall, color = palette.accentDeep)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .bounceClick(pressedScale = 0.98f, feedback = { it.selection() }, onClick = onOpen)
+                    .clip(DiviCardShape)
+                    .background(palette.raised)
+                    .padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Avatar(name = debt.from, size = 42.dp)
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = "${debt.from} → ${debt.to}",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = item.group.name,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1
+                    )
+                }
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = formatCurrency(debt.amount),
+                        style = MaterialTheme.typography.titleSmall.mono().copy(fontWeight = FontWeight.Bold),
+                        color = if (mine) palette.negative else if (debt.to == user) palette.positive else MaterialTheme.colorScheme.onSurface
+                    )
+                    Row(
+                        modifier = Modifier
+                            .padding(top = 4.dp)
+                            .bounceClick(pressedScale = 0.88f, feedback = { it.success() }, onClick = settle)
+                            .clip(DiviPillShape)
+                            .background(palette.accentSoft)
+                            .padding(horizontal = 10.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(Icons.Rounded.Check, null, tint = palette.accentDeep, modifier = Modifier.size(14.dp))
+                        Text("Saldar", style = MaterialTheme.typography.labelSmall, color = palette.accentDeep)
+                    }
                 }
             }
         }

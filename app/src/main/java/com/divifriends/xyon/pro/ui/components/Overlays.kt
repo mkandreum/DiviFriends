@@ -1,5 +1,16 @@
 package com.divifriends.xyon.pro.ui.components
 
+import kotlinx.coroutines.delay
+import com.divifriends.xyon.pro.ui.motion.bounceClick
+import com.divifriends.xyon.pro.ui.haptics.LocalHaptics
+import androidx.compose.ui.zIndex
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.border
+import androidx.compose.animation.core.animateFloatAsState
+import android.os.SystemClock
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -183,52 +194,125 @@ fun DiviSheet(
     }
 }
 
-/** Toast pill that drops from the top with a springy bounce. */
+data class ToastItem(val id: Long, val text: String, val createdAt: Long = SystemClock.uptimeMillis())
+
+/** How long each toast stays, counted from when it arrived. */
+private const val TOAST_LIFETIME_MS = 2800L
+
+/**
+ * Toasts drop from the top with a springy bounce and stack: the newest sits in
+ * front and up to two older ones peek out underneath, smaller and dimmer. Tap
+ * the stack and it springs apart into a list (timers pause while it is open);
+ * tap again to fold it back.
+ */
 @Composable
 fun DiviToastHost(
-    message: String?,
+    toasts: List<ToastItem>,
+    onDismiss: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val palette = LocalDiviPalette.current
-    AnimatedVisibility(
-        visible = message != null,
-        enter = slideInVertically(spring(dampingRatio = 0.55f, stiffness = Spring.StiffnessMediumLow)) { -it * 2 } +
-            fadeIn() + scaleIn(initialScale = 0.8f),
-        exit = slideOutVertically { -it * 2 } + fadeOut(),
+    val haptics = LocalHaptics.current
+    var expanded by remember { mutableStateOf(false) }
+    if (toasts.size < 2) expanded = false
+    val visible = toasts.takeLast(3).reversed()
+
+    Box(
         modifier = modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(horizontal = 24.dp, vertical = 8.dp),
+        contentAlignment = Alignment.TopCenter
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(horizontal = 24.dp, vertical = 8.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Row(
-                modifier = Modifier
-                    .floatingShadow(DiviPillShape, 16.dp, Color(0x40000000))
-                    .clip(DiviPillShape)
-                    .background(if (palette.isDark) palette.raised else palette.ink)
-                    .padding(start = 8.dp, end = 18.dp, top = 8.dp, bottom = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Box(
-                    Modifier
-                        .size(28.dp)
-                        .clip(CircleShape)
-                        .background(palette.sun),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Rounded.Info, null, tint = palette.onSun, modifier = Modifier.size(16.dp))
+        visible.forEachIndexed { depth, toast ->
+            key(toast.id) {
+                LaunchedEffect(toast.id, expanded) {
+                    if (expanded) return@LaunchedEffect
+                    val left = toast.createdAt + TOAST_LIFETIME_MS - SystemClock.uptimeMillis()
+                    delay(left.coerceAtLeast(700L))
+                    onDismiss(toast.id)
                 }
-                Text(
-                    text = message.orEmpty(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White
+                ToastPill(
+                    text = toast.text,
+                    depth = depth,
+                    expanded = expanded,
+                    onClick = {
+                        if (toasts.size > 1) {
+                            expanded = !expanded
+                            haptics?.selection()
+                        } else onDismiss(toast.id)
+                    },
+                    modifier = Modifier.zIndex(-depth.toFloat())
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun ToastPill(
+    text: String,
+    depth: Int,
+    expanded: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val palette = LocalDiviPalette.current
+    val appear = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        appear.animateTo(1f, spring(dampingRatio = 0.55f, stiffness = Spring.StiffnessMediumLow))
+    }
+    val springy = spring<Float>(dampingRatio = 0.72f, stiffness = Spring.StiffnessMediumLow)
+    // Collapsed: peek 9dp below the one in front. Expanded: a full list.
+    val offset by animateFloatAsState(
+        targetValue = if (expanded) depth * 62f else depth * 9f,
+        animationSpec = springy,
+        label = "toastOffset"
+    )
+    val scale by animateFloatAsState(
+        targetValue = if (expanded) 1f else 1f - 0.06f * depth,
+        animationSpec = springy,
+        label = "toastScale"
+    )
+    val dim by animateFloatAsState(
+        targetValue = if (expanded) 1f else 1f - 0.3f * depth,
+        animationSpec = springy,
+        label = "toastAlpha"
+    )
+    Row(
+        modifier = modifier
+            .graphicsLayer {
+                translationY = offset.dp.toPx() + (1f - appear.value) * -90.dp.toPx()
+                val s = scale * (0.8f + 0.2f * appear.value)
+                scaleX = s
+                scaleY = s
+                alpha = dim * appear.value.coerceIn(0f, 1f)
+                transformOrigin = TransformOrigin(0.5f, 0f)
+            }
+            .bounceClick(pressedScale = 0.96f, feedback = { }, onClick = onClick)
+            .floatingShadow(DiviPillShape, 16.dp, Color(0x40000000))
+            .clip(DiviPillShape)
+            .background(palette.raised)
+            .border(1.dp, palette.hairline, DiviPillShape)
+            .padding(start = 8.dp, end = 18.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Box(
+            Modifier
+                .size(28.dp)
+                .clip(CircleShape)
+                .background(palette.sun),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Rounded.Info, null, tint = palette.onSun, modifier = Modifier.size(16.dp))
+        }
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 

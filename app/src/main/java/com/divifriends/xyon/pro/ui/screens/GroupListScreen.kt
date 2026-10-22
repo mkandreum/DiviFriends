@@ -36,6 +36,8 @@ import com.divifriends.xyon.pro.ui.components.SurfaceCard
 import com.divifriends.xyon.pro.ui.components.Tone
 import com.divifriends.xyon.pro.ui.formatCurrency
 import com.divifriends.xyon.pro.ui.motion.staggeredAppear
+import com.divifriends.xyon.pro.ui.motion.groupSharedKey
+import com.divifriends.xyon.pro.ui.motion.sharedContainer
 import com.divifriends.xyon.pro.ui.theme.LocalDiviPalette
 import com.divifriends.xyon.pro.ui.theme.mono
 
@@ -99,7 +101,9 @@ fun GroupListScreen(
                         val pending = group.debts().size
                         SurfaceCard(
                             onClick = { onOpenGroup(group.id) },
-                            modifier = Modifier.staggeredAppear(index)
+                            modifier = Modifier
+                                .staggeredAppear(index)
+                                .sharedContainer(groupSharedKey(group.id))
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,

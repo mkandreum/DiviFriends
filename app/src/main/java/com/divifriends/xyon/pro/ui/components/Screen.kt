@@ -1,10 +1,5 @@
 package com.divifriends.xyon.pro.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -33,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -41,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.layout
@@ -51,14 +48,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.divifriends.xyon.pro.ui.haptics.LocalHaptics
 import com.divifriends.xyon.pro.ui.motion.bounceClick
 import com.divifriends.xyon.pro.ui.motion.floating
 import com.divifriends.xyon.pro.ui.theme.LocalDiviPalette
 
 /**
- * The app's page layout: an animated gradient hero that parallaxes and fades
- * as you scroll, and a rounded sheet sliding over it. When the hero scrolls
- * away a compact title bar drops in.
+ * The app's page layout: an animated aurora hero that parallaxes, shrinks
+ * towards the top-left and fades as you scroll, and a rounded sheet sliding
+ * over it. The compact title bar is driven by the scroll itself: its title
+ * grows in from a larger size as the hero title shrinks away, with a light
+ * tick the moment the bar locks in. [mood] (−1…1) tints the aurora: lime when
+ * you're owed money, orange when you owe.
  */
 @Composable
 fun HeroScaffold(
@@ -67,6 +68,7 @@ fun HeroScaffold(
     onBack: (() -> Unit)? = null,
     scrollState: ScrollState = rememberScrollState(),
     bottomPadding: Dp = 120.dp,
+    mood: Float = 0f,
     hero: @Composable ColumnScope.() -> Unit,
     sheet: @Composable ColumnScope.() -> Unit
 ) {
@@ -74,9 +76,16 @@ fun HeroScaffold(
     val density = LocalDensity.current
     var heroHeight by remember { mutableIntStateOf(1) }
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-    val collapsed by remember {
-        derivedStateOf { scrollState.value > heroHeight - with(density) { 90.dp.toPx() } }
+    val collapseStart = with(density) { 170.dp.toPx() }
+    val collapseRange = with(density) { 80.dp.toPx() }
+    // 0 → hero fully shown, 1 → compact bar fully in. Read in draw lambdas only.
+    val barProgress: () -> Float = {
+        ((scrollState.value - (heroHeight - collapseStart)) / collapseRange).coerceIn(0f, 1f)
     }
+    val barVisible by remember { derivedStateOf { barProgress() > 0f } }
+    val collapsed by remember { derivedStateOf { barProgress() >= 1f } }
+    val haptics = LocalHaptics.current
+    LaunchedEffect(collapsed) { if (collapsed) haptics?.tick() }
 
     Box(
         modifier = modifier
@@ -87,7 +96,8 @@ fun HeroScaffold(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(with(density) { heroHeight.toDp() } + 80.dp)
-                .graphicsLayer { translationY = -scrollState.value * 0.5f }
+                .graphicsLayer { translationY = -scrollState.value * 0.5f },
+            mood = mood
         )
         Column(
             modifier = Modifier
@@ -103,8 +113,10 @@ fun HeroScaffold(
                         val s = scrollState.value.toFloat()
                         val f = (s / heroHeight).coerceIn(0f, 1f)
                         translationY = s * 0.45f
-                        alpha = (1f - f * 1.4f).coerceIn(0f, 1f)
-                        val scale = 1f - 0.06f * f
+                        alpha = (1f - f * 1.3f).coerceIn(0f, 1f)
+                        // Shrink towards the top-left, where the compact title lands.
+                        transformOrigin = TransformOrigin(0f, 0f)
+                        val scale = 1f - 0.18f * f
                         scaleX = scale
                         scaleY = scale
                     }
@@ -129,13 +141,13 @@ fun HeroScaffold(
             }
         }
 
-        AnimatedVisibility(
-            visible = collapsed && compactTitle != null,
-            enter = slideInVertically { -it } + fadeIn(),
-            exit = slideOutVertically { -it } + fadeOut()
-        ) {
-            Box(Modifier.fillMaxWidth()) {
-                HeroGradient(Modifier.matchParentSize(), animated = false)
+        if (barVisible && compactTitle != null) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer { alpha = barProgress() }
+            ) {
+                HeroGradient(Modifier.matchParentSize(), animated = false, mood = mood)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -146,11 +158,19 @@ fun HeroScaffold(
                 ) {
                     if (onBack != null) HeroIconButton(Icons.Rounded.ArrowBackIosNew, onBack, size = 36.dp, contentDescription = "Atrás")
                     Text(
-                        text = compactTitle.orEmpty(),
+                        text = compactTitle,
                         style = MaterialTheme.typography.titleMedium,
                         color = palette.onHero,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.graphicsLayer {
+                            val p = barProgress()
+                            transformOrigin = TransformOrigin(0f, 0.5f)
+                            val scale = 1.45f - 0.45f * p
+                            scaleX = scale
+                            scaleY = scale
+                            translationY = (1f - p) * 22.dp.toPx()
+                        }
                     )
                 }
             }

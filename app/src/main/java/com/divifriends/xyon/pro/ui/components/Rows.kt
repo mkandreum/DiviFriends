@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.divifriends.xyon.pro.ui.motion.bounceClick
+import com.divifriends.xyon.pro.ui.motion.sharedContainer
 import com.divifriends.xyon.pro.ui.theme.LocalDiviPalette
 import com.divifriends.xyon.pro.ui.theme.Tabular
 import com.divifriends.xyon.pro.ui.theme.mono
@@ -102,14 +103,17 @@ fun GroupCard(
     tone: Tone,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    width: Dp = 148.dp
+    width: Dp = 148.dp,
+    /** Shared-element key: the card expands into the screen it opens. */
+    sharedKey: String? = null
 ) {
     val palette = LocalDiviPalette.current
     val fg = palette.content(tone, MaterialTheme.colorScheme.onSurface)
     Column(
         modifier = modifier
             .width(width)
-            .bounceClick(pressedScale = 0.94f, feedback = { it.selection() }, onClick = onClick)
+            .then(if (sharedKey != null) Modifier.sharedContainer(sharedKey) else Modifier)
+            .bounceClick(pressedScale = 0.94f, feedback = { it.swell() }, onClick = onClick)
             .floatingShadow(DiviCardShape, 10.dp, Color(0x22000000))
             .clip(DiviCardShape)
             .background(palette.container(tone))

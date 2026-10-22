@@ -9,6 +9,8 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -33,6 +35,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
 import androidx.compose.material.icons.rounded.AccountBalanceWallet
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Contactless
 import androidx.compose.material.icons.rounded.GroupAdd
 import androidx.compose.material.icons.rounded.Groups
@@ -48,6 +51,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -56,7 +61,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -72,21 +76,26 @@ import com.divifriends.xyon.pro.data.model.AppData
 import com.divifriends.xyon.pro.data.model.Group
 import com.divifriends.xyon.pro.nfc.NfcController
 import com.divifriends.xyon.pro.ui.components.ActionTile
+import com.divifriends.xyon.pro.ui.motion.LocalNavAnimatedScope
+import com.divifriends.xyon.pro.ui.motion.LocalSharedTransitionScope
 import com.divifriends.xyon.pro.ui.components.ConfettiBurst
 import com.divifriends.xyon.pro.ui.components.DiviBackground
 import com.divifriends.xyon.pro.ui.components.DiviConfirmDialog
 import com.divifriends.xyon.pro.ui.components.DiviDialog
 import com.divifriends.xyon.pro.ui.components.DiviFloatingNav
+import com.divifriends.xyon.pro.ui.components.DiviIsland
+import com.divifriends.xyon.pro.ui.components.IslandActivity
 import com.divifriends.xyon.pro.ui.components.DiviNavItem
 import com.divifriends.xyon.pro.ui.components.DiviSheet
 import com.divifriends.xyon.pro.ui.components.DiviToastHost
-import com.divifriends.xyon.pro.ui.components.PulseRings
+import com.divifriends.xyon.pro.ui.components.ToastItem
 import com.divifriends.xyon.pro.ui.components.SoftButton
 import com.divifriends.xyon.pro.ui.components.Tone
 import com.divifriends.xyon.pro.ui.components.TransactionRow
 import com.divifriends.xyon.pro.ui.haptics.DiviHaptics
 import com.divifriends.xyon.pro.ui.haptics.LocalHaptics
 import com.divifriends.xyon.pro.ui.motion.EmphasizedDecelerate
+import com.divifriends.xyon.pro.ui.theme.LocalDiviPalette
 import com.divifriends.xyon.pro.ui.navigation.Routes
 import com.divifriends.xyon.pro.ui.screens.BalancesScreen
 import com.divifriends.xyon.pro.ui.screens.CreateGroupScreen
@@ -111,6 +120,7 @@ private sealed interface NfcUiState {
     data object SelectGroup : NfcUiState
     data class ReadyToSend(val groupName: String) : NfcUiState
     data object WaitingToReceive : NfcUiState
+    data class Received(val groupName: String) : NfcUiState
 }
 
 private sealed interface NavIntent {
@@ -132,10 +142,14 @@ fun DiviAppRoot(viewModel: DiviViewModel) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val haptics = remember(context) { DiviHaptics(context) }
-    SideEffect { haptics.userEnabled = appData.config.haptics }
+    val rootView = LocalView.current
+    SideEffect {
+        haptics.userEnabled = appData.config.haptics
+        haptics.view = rootView
+    }
 
-    var toastMessage by remember { mutableStateOf<String?>(null) }
-    var toastKey by remember { mutableIntStateOf(0) }
+    val toasts = remember { mutableStateListOf<ToastItem>() }
+    var nextToastId by remember { mutableLongStateOf(0L) }
     var confettiKey by remember { mutableIntStateOf(0) }
     var nfcState by remember { mutableStateOf<NfcUiState?>(null) }
     var pendingCsv by remember { mutableStateOf<String?>(null) }
@@ -143,8 +157,16 @@ fun DiviAppRoot(viewModel: DiviViewModel) {
     var navIntent by remember { mutableStateOf<NavIntent?>(null) }
 
     fun showToast(message: String) {
-        toastMessage = message
-        toastKey++
+        toasts.add(ToastItem(id = nextToastId++, text = message))
+        while (toasts.size > 4) toasts.removeAt(0)
+    }
+
+    // The success island shows for a moment, then folds away on its own.
+    LaunchedEffect(nfcState) {
+        if (nfcState is NfcUiState.Received) {
+            delay(3200)
+            nfcState = null
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -156,12 +178,6 @@ fun DiviAppRoot(viewModel: DiviViewModel) {
                     haptics.celebrate()
                 }
             }
-        }
-    }
-    LaunchedEffect(toastKey) {
-        if (toastKey > 0) {
-            delay(2600)
-            toastMessage = null
         }
     }
 
@@ -191,6 +207,7 @@ fun DiviAppRoot(viewModel: DiviViewModel) {
                 showToast("Error al leer la invitación. 😕")
             } else {
                 viewModel.applyInvitation(group)
+                nfcState = NfcUiState.Received(group.name)
                 confettiKey++
                 haptics.celebrate()
             }
@@ -353,8 +370,23 @@ fun DiviAppRoot(viewModel: DiviViewModel) {
                     OnboardingScreen(onConfirm = viewModel::completeOnboarding)
                 }
 
-                DiviToastHost(message = toastMessage, modifier = Modifier.align(Alignment.TopCenter))
+                DiviToastHost(
+                    toasts = toasts,
+                    onDismiss = { id -> toasts.removeAll { it.id == id } },
+                    modifier = Modifier.align(Alignment.TopCenter)
+                )
                 ConfettiBurst(trigger = confettiKey)
+
+                DiviIsland(
+                    activity = nfcIslandActivity(
+                        state = nfcState,
+                        onCancel = {
+                            nfcController?.stopReceiving()
+                            nfcState = null
+                        }
+                    ),
+                    modifier = Modifier.align(Alignment.TopCenter)
+                )
 
                 NfcDialogs(
                     state = nfcState,
@@ -409,6 +441,7 @@ fun DiviAppRoot(viewModel: DiviViewModel) {
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.isTabSwitch(): Boolean =
     initialState.destination.route in Routes.roots && targetState.destination.route in Routes.roots
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun DiviNavHost(
     appData: AppData,
@@ -443,141 +476,150 @@ private fun DiviNavHost(
     val pushSpec = tween<androidx.compose.ui.unit.IntOffset>(420, easing = EmphasizedDecelerate)
 
     Box(modifier = modifier) {
-        NavHost(
-            navController = navController,
-            startDestination = Routes.HOME,
-            enterTransition = {
-                if (isTabSwitch()) fadeIn(tween(260, delayMillis = 60)) + scaleIn(tween(320, easing = EmphasizedDecelerate), initialScale = 0.96f)
-                else slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, pushSpec) { it / 3 } + fadeIn(tween(300))
-            },
-            exitTransition = {
-                if (isTabSwitch()) fadeOut(tween(120))
-                else slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, pushSpec) { it / 6 } +
-                    fadeOut(tween(260)) + scaleOut(tween(300), targetScale = 0.96f)
-            },
-            popEnterTransition = {
-                if (isTabSwitch()) fadeIn(tween(260)) as EnterTransition
-                else slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, pushSpec) { it / 6 } +
-                    fadeIn(tween(300)) + scaleIn(tween(320), initialScale = 0.96f)
-            },
-            popExitTransition = {
-                if (isTabSwitch()) fadeOut(tween(120)) as ExitTransition
-                else slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, pushSpec) { it / 3 } + fadeOut(tween(220))
-            }
-        ) {
-            composable(Routes.HOME) {
-                HomeScreen(
-                    appData = appData,
-                    onOpenGroup = { navController.navigate(Routes.groupDetail(it)) },
-                    onCreateGroup = { navController.navigate(Routes.CREATE) },
-                    onOpenGroups = { navController.navigate(Routes.GROUPS) { launchSingleTop = true } },
-                    onAddExpense = { groupId -> navController.navigate(Routes.groupDetail(groupId, add = true)) },
-                    onOpenReport = { navController.navigate(Routes.REPORT) { launchSingleTop = true } },
-                    onOpenSettings = { navController.navigate(Routes.SETTINGS) },
-                    onNfcInvite = onNfcSend,
-                    onNfcScan = onNfcReceive
-                )
-            }
-            composable(Routes.GROUPS) {
-                GroupListScreen(
-                    appData = appData,
-                    onOpenGroup = { navController.navigate(Routes.groupDetail(it)) },
-                    onCreateGroup = { navController.navigate(Routes.CREATE) },
-                    onNfcSend = onNfcSend,
-                    onNfcReceive = onNfcReceive
-                )
-            }
-            composable(
-                Routes.GROUP_DETAIL,
-                arguments = listOf(
-                    navArgument("groupId") { type = NavType.StringType },
-                    navArgument("add") {
-                        type = NavType.BoolType
-                        defaultValue = false
-                    }
-                )
-            ) { entry ->
-                val groupId = entry.arguments?.getString("groupId")
-                val openAdd = entry.arguments?.getBoolean("add") ?: false
-                val group = groupId?.let { appData.groups[it] }
-                if (group == null) {
-                    LaunchedEffect(Unit) { navController.popBackStack() }
-                } else {
-                    GroupDetailScreen(
-                        group = group,
-                        userName = appData.config.userName,
-                        openAddOnStart = openAdd,
-                        onBack = { navController.popBackStack() },
-                        onEdit = { navController.navigate(Routes.edit(group.id)) },
-                        onAddExpense = { description, amount, paidBy, participants, category ->
-                            viewModel.addExpense(group.id, description, amount, paidBy, participants, category)
-                        },
-                        onUpdateExpense = { id, description, amount, paidBy, participants, category ->
-                            viewModel.updateExpense(group.id, id, description, amount, paidBy, participants, category)
-                        },
-                        onDeleteExpense = { viewModel.deleteExpense(group.id, it) },
-                        onSettle = { from, to, amount -> viewModel.settleDebt(group.id, from, to, amount) },
-                        onExportText = { onExportText(group) },
-                        onExportCsv = { onExportCsv(group) }
-                    )
-                }
-            }
-            composable(Routes.CREATE) {
-                CreateGroupScreen(
-                    userName = appData.config.userName,
-                    onBack = { navController.popBackStack() },
-                    onCreated = {
-                        if (!navController.popBackStack(Routes.GROUPS, inclusive = false)) {
-                            navController.popBackStack()
-                            navController.navigate(Routes.GROUPS) { launchSingleTop = true }
-                        }
+        SharedTransitionLayout(Modifier.fillMaxSize()) {
+            CompositionLocalProvider(LocalSharedTransitionScope provides this) {
+                NavHost(
+                    navController = navController,
+                    startDestination = Routes.HOME,
+                    enterTransition = {
+                        if (isTabSwitch()) fadeIn(tween(260, delayMillis = 60)) + scaleIn(tween(320, easing = EmphasizedDecelerate), initialScale = 0.96f)
+                        else slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, pushSpec) { it / 3 } + fadeIn(tween(300))
                     },
-                    onCreate = viewModel::createGroup
-                )
-            }
-            composable(Routes.EDIT) { entry ->
-                val groupId = entry.arguments?.getString("groupId")
-                val group = groupId?.let { appData.groups[it] }
-                if (group == null) {
-                    LaunchedEffect(Unit) { navController.popBackStack() }
-                } else {
-                    EditGroupScreen(
-                        group = group,
-                        userName = appData.config.userName,
-                        onBack = { navController.popBackStack() },
-                        onRename = { viewModel.renameGroup(group.id, it) },
-                        onAddParticipant = { viewModel.addParticipant(group.id, it) },
-                        onRemoveParticipant = { viewModel.removeParticipant(group.id, it) },
-                        onDeleteGroup = {
-                            viewModel.deleteGroup(group.id)
-                            if (!navController.popBackStack(Routes.GROUPS, inclusive = false)) {
-                                navController.popBackStack(Routes.HOME, inclusive = false)
-                            }
+                    exitTransition = {
+                        if (isTabSwitch()) fadeOut(tween(120))
+                        else slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, pushSpec) { it / 6 } +
+                            fadeOut(tween(260)) + scaleOut(tween(300), targetScale = 0.96f)
+                    },
+                    popEnterTransition = {
+                        if (isTabSwitch()) fadeIn(tween(260)) as EnterTransition
+                        else slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, pushSpec) { it / 6 } +
+                            fadeIn(tween(300)) + scaleIn(tween(320), initialScale = 0.96f)
+                    },
+                    popExitTransition = {
+                        if (isTabSwitch()) fadeOut(tween(120)) as ExitTransition
+                        else slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, pushSpec) { it / 3 } +
+                            fadeOut(tween(220)) + scaleOut(tween(320, easing = EmphasizedDecelerate), targetScale = 0.9f)
+                    }
+                ) {
+                    composable(Routes.HOME) {
+                        CompositionLocalProvider(LocalNavAnimatedScope provides this) {
+                            HomeScreen(
+                                appData = appData,
+                                onOpenGroup = { navController.navigate(Routes.groupDetail(it)) },
+                                onCreateGroup = { navController.navigate(Routes.CREATE) },
+                                onOpenGroups = { navController.navigate(Routes.GROUPS) { launchSingleTop = true } },
+                                onAddExpense = { groupId -> navController.navigate(Routes.groupDetail(groupId, add = true)) },
+                                onOpenReport = { navController.navigate(Routes.REPORT) { launchSingleTop = true } },
+                                onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                                onNfcInvite = onNfcSend,
+                                onNfcScan = onNfcReceive
+                            )
                         }
-                    )
+                    }
+                    composable(Routes.GROUPS) {
+                        CompositionLocalProvider(LocalNavAnimatedScope provides this) {
+                            GroupListScreen(
+                                appData = appData,
+                                onOpenGroup = { navController.navigate(Routes.groupDetail(it)) },
+                                onCreateGroup = { navController.navigate(Routes.CREATE) },
+                                onNfcSend = onNfcSend,
+                                onNfcReceive = onNfcReceive
+                            )
+                        }
+                    }
+                    composable(
+                        Routes.GROUP_DETAIL,
+                        arguments = listOf(
+                            navArgument("groupId") { type = NavType.StringType },
+                            navArgument("add") {
+                                type = NavType.BoolType
+                                defaultValue = false
+                            }
+                        )
+                    ) { entry ->
+                        val groupId = entry.arguments?.getString("groupId")
+                        val openAdd = entry.arguments?.getBoolean("add") ?: false
+                        val group = groupId?.let { appData.groups[it] }
+                        if (group == null) {
+                            LaunchedEffect(Unit) { navController.popBackStack() }
+                        } else CompositionLocalProvider(LocalNavAnimatedScope provides this) {
+                            GroupDetailScreen(
+                                group = group,
+                                userName = appData.config.userName,
+                                openAddOnStart = openAdd,
+                                onBack = { navController.popBackStack() },
+                                onEdit = { navController.navigate(Routes.edit(group.id)) },
+                                onAddExpense = { description, amount, paidBy, participants, category ->
+                                    viewModel.addExpense(group.id, description, amount, paidBy, participants, category)
+                                },
+                                onUpdateExpense = { id, description, amount, paidBy, participants, category ->
+                                    viewModel.updateExpense(group.id, id, description, amount, paidBy, participants, category)
+                                },
+                                onDeleteExpense = { viewModel.deleteExpense(group.id, it) },
+                                onSettle = { from, to, amount -> viewModel.settleDebt(group.id, from, to, amount) },
+                                onExportText = { onExportText(group) },
+                                onExportCsv = { onExportCsv(group) }
+                            )
+                        }
+                    }
+                    composable(Routes.CREATE) {
+                        CreateGroupScreen(
+                            userName = appData.config.userName,
+                            onBack = { navController.popBackStack() },
+                            onCreated = {
+                                if (!navController.popBackStack(Routes.GROUPS, inclusive = false)) {
+                                    navController.popBackStack()
+                                    navController.navigate(Routes.GROUPS) { launchSingleTop = true }
+                                }
+                            },
+                            onCreate = viewModel::createGroup
+                        )
+                    }
+                    composable(Routes.EDIT) { entry ->
+                        val groupId = entry.arguments?.getString("groupId")
+                        val group = groupId?.let { appData.groups[it] }
+                        if (group == null) {
+                            LaunchedEffect(Unit) { navController.popBackStack() }
+                        } else {
+                            EditGroupScreen(
+                                group = group,
+                                userName = appData.config.userName,
+                                onBack = { navController.popBackStack() },
+                                onRename = { viewModel.renameGroup(group.id, it) },
+                                onAddParticipant = { viewModel.addParticipant(group.id, it) },
+                                onRemoveParticipant = { viewModel.removeParticipant(group.id, it) },
+                                onDeleteGroup = {
+                                    viewModel.deleteGroup(group.id)
+                                    if (!navController.popBackStack(Routes.GROUPS, inclusive = false)) {
+                                        navController.popBackStack(Routes.HOME, inclusive = false)
+                                    }
+                                }
+                            )
+                        }
+                    }
+                    composable(Routes.BALANCES) {
+                        BalancesScreen(
+                            appData = appData,
+                            onOpenGroup = { navController.navigate(Routes.groupDetail(it)) },
+                            onAddExpense = onNewExpense,
+                            onSettle = { groupId, from, to, amount -> viewModel.settleDebt(groupId, from, to, amount) }
+                        )
+                    }
+                    composable(Routes.REPORT) { ReportScreen(appData) }
+                    composable(Routes.SETTINGS) {
+                        SettingsScreen(
+                            userName = appData.config.userName,
+                            groupCount = appData.groups.size,
+                            expenseCount = appData.groups.values.sumOf { g -> g.expenses.count { !it.isSettlement } },
+                            hapticsEnabled = appData.config.haptics,
+                            onHapticsChange = viewModel::setHaptics,
+                            onBack = { navController.popBackStack() },
+                            onBackup = onBackup,
+                            onRestore = onRestore,
+                            onDeleteAll = { viewModel.deleteAllData() }
+                        )
+                    }
                 }
-            }
-            composable(Routes.BALANCES) {
-                BalancesScreen(
-                    appData = appData,
-                    onOpenGroup = { navController.navigate(Routes.groupDetail(it)) },
-                    onAddExpense = onNewExpense,
-                    onSettle = { groupId, from, to, amount -> viewModel.settleDebt(groupId, from, to, amount) }
-                )
-            }
-            composable(Routes.REPORT) { ReportScreen(appData) }
-            composable(Routes.SETTINGS) {
-                SettingsScreen(
-                    userName = appData.config.userName,
-                    groupCount = appData.groups.size,
-                    expenseCount = appData.groups.values.sumOf { g -> g.expenses.count { !it.isSettlement } },
-                    hapticsEnabled = appData.config.haptics,
-                    onHapticsChange = viewModel::setHaptics,
-                    onBack = { navController.popBackStack() },
-                    onBackup = onBackup,
-                    onRestore = onRestore,
-                    onDeleteAll = { viewModel.deleteAllData() }
-                )
             }
         }
 
@@ -747,50 +789,45 @@ private fun NfcDialogs(
             }
         }
 
-        is NfcUiState.ReadyToSend -> NfcRadarDialog(
-            icon = Icons.Rounded.Nfc,
-            title = "Listo para enviar",
-            message = "Junta la parte trasera de los dos móviles para compartir \"${state.groupName}\".",
-            button = "Cerrar",
-            onDismiss = onDismiss
-        )
-
-        NfcUiState.WaitingToReceive -> NfcRadarDialog(
-            icon = Icons.Rounded.Contactless,
-            title = "Buscando invitación…",
-            message = "Acerca tu móvil al de tu amigo para unirte a su grupo.",
-            button = "Cancelar",
-            onDismiss = onDismiss
-        )
-
-        null -> Unit
+        // Live NFC activity is shown by the island, not a dialog.
+        is NfcUiState.ReadyToSend, NfcUiState.WaitingToReceive, is NfcUiState.Received, null -> Unit
     }
 }
 
+/** Maps NFC states that run in the background to the dynamic island. */
 @Composable
-private fun NfcRadarDialog(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    title: String,
-    message: String,
-    button: String,
-    onDismiss: () -> Unit
-) {
-    DiviDialog(onDismiss = onDismiss) {
-        PulseRings(icon = icon, modifier = Modifier.align(Alignment.CenterHorizontally))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+private fun nfcIslandActivity(state: NfcUiState?, onCancel: () -> Unit): IslandActivity? {
+    val palette = LocalDiviPalette.current
+    return when (state) {
+        is NfcUiState.ReadyToSend -> IslandActivity(
+            key = state,
+            icon = Icons.Rounded.Nfc,
+            label = "Compartiendo «${state.groupName}»",
+            title = "Listo para enviar",
+            message = "Junta la parte trasera de los dos móviles para compartir «${state.groupName}».",
+            accent = palette.sun,
+            actionLabel = "Cerrar",
+            onAction = onCancel
         )
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+        NfcUiState.WaitingToReceive -> IslandActivity(
+            key = state,
+            icon = Icons.Rounded.Contactless,
+            label = "Buscando invitación…",
+            title = "Buscando invitación…",
+            message = "Acerca tu móvil al de tu amigo para unirte a su grupo.",
+            accent = palette.onBlush,
+            actionLabel = "Cancelar",
+            onAction = onCancel
         )
-        SoftButton(text = button, onClick = onDismiss, tone = Tone.Raised)
+        is NfcUiState.Received -> IslandActivity(
+            key = state,
+            icon = Icons.Rounded.Check,
+            label = "Te uniste a «${state.groupName}»",
+            title = "¡Dentro!",
+            message = "Ya formas parte de «${state.groupName}».",
+            accent = palette.positive,
+            live = false
+        )
+        else -> null
     }
 }
