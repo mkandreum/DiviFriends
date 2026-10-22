@@ -13,8 +13,8 @@ android {
         applicationId = "com.divifriends.xyon.pro"
         minSdk = 27
         targetSdk = 36
-        versionCode = 2
-        versionName = "2.0"
+        versionCode = 3
+        versionName = "2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -24,7 +24,12 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8 full mode: shrinks, optimizes and inlines (big win for Compose).
+            isMinifyEnabled = true
+            isShrinkResources = true
+            // Sideload-friendly: signed with the debug key. Swap in a real
+            // signing config before publishing to Play.
+            signingConfig = signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -55,6 +60,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
+    // Installs the libraries' baseline profiles on sideloaded APKs too.
+    implementation(libs.androidx.profileinstaller)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
